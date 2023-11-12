@@ -18,7 +18,8 @@ type AstPrinter() =
             ()
 
         member this.Visit(declVarStmt: DeclVarStmt): unit =
-
+            match declVarStmt with
+            | VarStmt (identifier, typeOf, _) -> printfn $"Visited DeclVarStmt, Identifier: {identifier}, Type: {typeOf.ToString()}"
             ()
 
         member this.Visit(emptyNode: EmptyNode): unit =
@@ -30,9 +31,10 @@ type AstPrinter() =
             ()
 
         member this.Visit(usingDeclStmt: UsingDeclStmt): unit =
-
+            match usingDeclStmt with
+            | UsingDeclStmt (identifier, typeOf) -> printfn $"Visited UsingDeclStmt, Identifier: {identifier}, Type: {typeOf.ToString()}"
             ()
         
         member this.Visit(returnStmt: ReturnStmt): unit =
-
-                ()
+            printfn "Visited ReturnStmt"
+            ()
