@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AstPrinter.fs" />
+    <Compile Include="MetaLangVersion.fs" />
+    <Compile Include="Module.fs" />
+    <Compile Include="CompilerInstance.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MetaLang.Parser\MetaLang.Parser.fsproj" />
+    <ProjectReference Include="..\MetaLang.ErrorHandling\MetaLang.ErrorHandling.fsproj" />
+    <ProjectReference Include="..\MetaLang.Sema\MetaLang.Sema.fsproj" />
+  </ItemGroup>
+</Project>
