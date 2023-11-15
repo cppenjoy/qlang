@@ -4,6 +4,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Type\Type.fs" />
     <Compile Include="Lexer.fs" />
     <Compile Include="AST\AST.fs" />
     <Compile Include="Symbol.fs" />

@@ -2,7 +2,9 @@
 fn Main
     stackframe
 
-    arg number argc
-    arg array of string argv
+    arg int32 argc
+    arg @string argv 
+
+    print "Hello World!"
 
     endstackframe

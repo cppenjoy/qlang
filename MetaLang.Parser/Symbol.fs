@@ -2,6 +2,7 @@ namespace MetaLang.Parser.SymbolTable
 
 open System.Collections.Generic
 open MetaLang.Parser
+open TypeDefinition
 open AST
 
 module SymbolDefinition =
@@ -14,7 +15,7 @@ module SymbolDefinition =
 
     type ArrayElements() =
 
-        member val TypeOfElem: TypeVariant = TNumber with get
+        member val TypeOfElem: TypeVariant = TInt32 with get
         member val Elements: List<Symbol> = List<Symbol>() with get
 
     and AliasData(identifier: Identifier, typeVar: TypeVariant) =
@@ -26,7 +27,7 @@ module SymbolDefinition =
                                                                     , ?_aliasData: AliasData) =
 
         let arrayElem = defaultArg _arrayElem (ArrayElements())
-        let aliasData = defaultArg _aliasData (AliasData((Identifier.Identifier ""),TNumber))
+        let aliasData = defaultArg _aliasData (AliasData((Identifier.Identifier ""), TInt32))
 
         member val Type: SymbolType = _type with get
         member val TypeInfo: TypeVariant = _info with get

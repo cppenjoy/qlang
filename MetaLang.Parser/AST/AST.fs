@@ -2,6 +2,7 @@ namespace MetaLang.Parser
 
 open MetaLang.Parser.Lexer
 open TokenDefinition
+open TypeDefinition
 
 module AST =
 
@@ -16,13 +17,6 @@ module AST =
         abstract member Visit: UsingDeclStmt -> unit
         abstract member Visit: ReturnStmt -> unit
         abstract member Visit: EmptyNode -> unit
-
-    and TypeVariant  =
-        | TNumber 
-        | TString
-        | TBool
-        | TArray
-        | TAny
 
     and Identifier =
         | Identifier of string

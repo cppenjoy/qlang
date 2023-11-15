@@ -1,0 +1,5 @@
+this folder includes a list of problems in the design of the language, and their solution comes first
+
+naming convention: "issue" + number, indexing starts from zero
+
+to solve the issue, you need to create a branch via git, and when solving it, merge the branch with the main

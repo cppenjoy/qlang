@@ -26,7 +26,14 @@ module TokenDefinition =
         | KeywordLet // let
         | KeywordPrint // print
         | KeywordString // string
-        | KeywordNumber // number
+
+        | KeywordInt16 // int16
+        | KeywordInt32 // int32
+        | KeywordInt64 // int64
+
+        | KeywordFloat // float
+        | KeywordDouble // double
+
         | KeywordArray // array
         | KeywordBool // bool
         | KeywordFn // fn
@@ -37,20 +44,35 @@ module TokenDefinition =
         | Error
         | EOF
 
-    type Token(TokenType: TokenType, TokenLexeme: string, ?TokenLine: int, ?TokenPos: int) = 
+    type LiteralVariant =
+        | None = 0
+        | Integer = 1
+        | Float = 2
+
+    type Token(TokenType: TokenType, TokenLexeme: string, ?TokenLine: int, ?TokenPos: int, ?LiteralType: LiteralVariant) = 
 
         let tokenLine = defaultArg TokenLine 0
         let tokenPos = defaultArg TokenPos 0
+        let literalType = defaultArg LiteralType LiteralVariant.None
 
         member this.Type = TokenType
         member this.Lexeme = TokenLexeme
         member this.Line = tokenLine
         member this.Pos = tokenPos
 
+        member this.LiteralType = literalType
+
     let KeywordAsToken = Map.ofList [
             ("let", TokenType.KeywordLet);
             ("print", TokenType.KeywordPrint);
-            ("number", TokenType.KeywordNumber);
+
+            ("int16", TokenType.KeywordInt16);
+            ("int32", TokenType.KeywordInt32);
+            ("int64", TokenType.KeywordInt64);
+
+            ("float", TokenType.KeywordFloat);
+            ("float", TokenType.KeywordDouble);
+
             ("bool", TokenType.KeywordBool);
             ("string", TokenType.KeywordString);
             ("fn", TokenType.KeywordFn);
@@ -137,6 +159,8 @@ module LexerDefinition =
 
         member private this.tokenize_number(results: LexerResults): unit = 
 
+            let mutable literalType: LiteralVariant = LiteralVariant.Integer
+
             while ( Char.IsDigit(this.peek(0)) && not(this.is_end(0)) ) do
                 this.next() |> ignore
 
@@ -144,12 +168,14 @@ module LexerDefinition =
             then
                 this.next() |> ignore
 
+                literalType <- LiteralVariant.Float
+
                 while ( Char.IsDigit(this.peek(0)) && not(this.is_end(0)) ) do
                     this.next() |> ignore
                   
             let value: string = this.Source.Substring(offset, pos - offset)
 
-            results.Tokens.Add(Token(TokenType.NumberLiteral, value, line, pos))
+            results.Tokens.Add(Token(TokenType.NumberLiteral, value, line, pos, literalType))
             ()
 
         member this.Tokenize(): LexerResults = 
