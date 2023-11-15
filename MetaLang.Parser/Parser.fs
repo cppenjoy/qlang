@@ -8,6 +8,7 @@ open MetaLang.ErrorHandling
 open TokenDefinition
 open SymbolDefinition
 open LexerDefinition
+open TypeDefinition
 open AST
 
 module ParserDefinition =
@@ -83,7 +84,9 @@ module ParserDefinition =
                 let primary: Token = next()
 
                 match primary.Type with
-                | KeywordNumber -> TNumber
+                | KeywordInt16 -> TInt16
+                | KeywordInt32 -> TInt32
+                | KeywordInt64 -> TInt64
                 | KeywordString -> TString
                 | KeywordBool -> TBool
                 | _ ->
@@ -98,7 +101,7 @@ module ParserDefinition =
 
                     | _ ->
                         throwError $"The type {primary.Lexeme} is undefined, did you man {getMirrorType primary.Lexeme}" |> ignore
-                        TNumber
+                        TInt32
 
             and parseIdentifier(): Identifier =
 
@@ -187,7 +190,7 @@ module ParserDefinition =
                     let Type = parseType()
 
                     let AliasData: AliasData = AliasData(identifier, Type)
-                    let AliasSymbol: Symbol = Symbol(Alias, TNumber, uint32 primary.Line, _aliasData = AliasData)
+                    let AliasSymbol: Symbol = Symbol(Alias, TInt32, uint32 primary.Line, _aliasData = AliasData)
 
                     parserResults.SymbolTable.Add AliasSymbol
 
@@ -202,7 +205,7 @@ module ParserDefinition =
                 let identifier: Identifier = parseIdentifier()
                 let optionalCheck: Token = next()
 
-                let mutable typeOfVar: TypeVariant = TNumber
+                let mutable typeOfVar: TypeVariant = TInt32
 
                 match optionalCheck.Type with
                 | Punctuator when optionalCheck.Lexeme = ":" ->

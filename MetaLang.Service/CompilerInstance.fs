@@ -14,13 +14,15 @@ module CompilerDefinition =
     open ModuleDefinition
     open AST
 
-    type CompilerOptions(?_lexerTrace: bool, ?_parserTrace: bool) = 
+    type CompilerOptions(?_lexerTrace: bool, ?_parserTrace: bool, ?_semaTrace: bool) = 
 
         let lexerTrace: bool = defaultArg _lexerTrace false
         let parserTrace: bool = defaultArg _parserTrace false
+        let semaTrace: bool = defaultArg _semaTrace false
 
         member val LexerTrace: bool = lexerTrace with get, set
         member val ParserTrace: bool = parserTrace with get, set
+        member val SemaTrace: bool = semaTrace with get, set
 
     type CompilerInstance(?_options: CompilerOptions) =
         
@@ -59,7 +61,7 @@ module CompilerDefinition =
                 moduleInst.Errors.AddRange(parserResults.Errors)
 
             // Parser Trace
-                if this.Options.LexerTrace
+                if this.Options.ParserTrace
                 then
                     let printVisitor: AstPrinter = AstPrinter()
 

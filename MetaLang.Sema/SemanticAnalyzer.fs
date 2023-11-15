@@ -8,6 +8,7 @@ open MetaLang.ErrorHandling
 open TokenDefinition
 open SymbolDefinition
 open LexerDefinition
+open TypeDefinition
 open AST
 
 module SemaDefinition =
@@ -15,10 +16,14 @@ module SemaDefinition =
     type SemaResults() =
         member val Errors: List<Error> = List<Error>() with get
 
-    type SemaAnalyzer(_symbolTable: List<Symbol>) =
+    type SemaAnalyzer(_symbolTable: List<Symbol>, ?_semaTrace: bool) =
+
+        let semaTrace = defaultArg _semaTrace false
 
         member val Results = SemaResults() with get
         member val SymbolTable = _symbolTable with get
+
+        member val Trace = semaTrace with get
         
         member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant): unit =
 
@@ -27,6 +32,14 @@ module SemaDefinition =
             let throwError(what): unit =
                 this.Results.Errors.Add (Error(what, 0, 0))
 
+            let toNumberType(typeOf): TypeVariant =
+                match typeOf with
+                | TInt16 | TInt32 | TInt64 | TFloat | TDouble -> TNumber
+                | _ -> TBad // Bad Cast Type
+
+            let isNumberType(typeOf): bool =
+                not(toNumberType(typeOf) = TBad)
+
             match expression with 
             | Expression.Identifier x ->
 
@@ -34,31 +47,23 @@ module SemaDefinition =
 
             | Expression.Literal x ->
 
+                let mutable typeOfLiteral: TypeVariant = TAny
+
                 match x with
 
-                | StringLiteral y ->
+                | Literal.StringLiteral x -> typeOfLiteral <- TString
+                | Literal.NumberLiteral (token) ->
+                    
+                    match token.LiteralType with
+                    | Integer -> typeOfLiteral <- TInt32
+                    | Float -> typeOfLiteral <- TDouble
 
-                    if not(excepted = TAny) && not(excepted = TString) 
-                    then
-                        throwError $"Type {excepted} was expected, but type string was received"
-                        ()
-                    ()
-                
-                | NumberLiteral y ->
+                | Literal.BooleanLiteral x -> typeOfLiteral <- TBool
+                | _ -> throwError $"The type {(typeOfLiteral.ToString())} is undefined"
 
-                        if not(excepted = TAny) && not(excepted = TNumber) 
-                        then
-                            throwError $"Type {excepted} was expected, but type number was received"
-                            ()
-                        ()
-
-                | BooleanLiteral y ->
-
-                        if not(excepted = TAny) && not(excepted = TBool) 
-                        then
-                            throwError $"Type {excepted} was expected, but type bool was received"
-                            ()
-                        ()
+                if not(typeOfLiteral = TAny) && not(typeOfLiteral = excepted)
+                then 
+                    throwError $"Type incompatibility. The Type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}"
 
             | Expression.BinaryExpression (BinaryExpression (_, _, expr)) -> 
             
