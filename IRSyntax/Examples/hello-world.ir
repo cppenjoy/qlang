@@ -1,0 +1,8 @@
+
+fn Main
+    stackframe
+
+    arg number argc
+    arg array of string argv
+
+    endstackframe
