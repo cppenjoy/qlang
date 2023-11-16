@@ -28,12 +28,17 @@ module AST =
 
     and Expression =
         | Expression of Expression
+
+        | CastExpression of CastExpression
         | BinaryExpression of BinaryExpression
 
         | Identifier of Identifier
         | Literal of Literal
 
         | EmptyNode of EmptyNode
+
+    and CastExpression =
+        | CastExpression of TypeVariant * Expression
 
     and ReturnStmt =
         | ReturnStmt of Expression

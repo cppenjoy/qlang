@@ -2,6 +2,7 @@
 
 expression ->
     | '(' expression ')'
+    | cast-expression
     | binary-expression
     | literal
     | identifier
@@ -12,6 +13,9 @@ literal ->
     | number
     | string    
     | boolean
+
+cast-expression ->
+    type expression
 
 call-expression ->
     identifier '(' call-param ')'

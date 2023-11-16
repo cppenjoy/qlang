@@ -49,6 +49,11 @@ module ParserDefinition =
                 | Operator -> true
                 | _ -> false
 
+            let inline isType(token: Token): bool =
+                match token.Type with
+                | KeywordString | KeywordBool | KeywordArray | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
+                | _ -> false
+
             let inline throwError(what: string): Token =
 
                 parserResults.Errors.Add ( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos) )
@@ -160,9 +165,20 @@ module ParserDefinition =
 
                         Expression.Literal(literal)
 
-                | _ -> 
-                    throwError $"{primary.Lexeme} - incomplete expression" |> ignore
-                    Expression.EmptyNode (EmptyNode ())
+                | _ ->
+
+                    if isType(primary)
+                    then
+                        pos <- pos - 1
+
+                        let typeOf = parseType()
+                        let expression = parseExpression()
+
+                        Expression.CastExpression (CastExpression(typeOf, expression))
+
+                    else
+                        throwError $"{primary.Lexeme} - incomplete expression" |> ignore
+                        Expression.EmptyNode (EmptyNode ())
 
 //    
 //            let parseArrayDeclStmt(): IVisitable =

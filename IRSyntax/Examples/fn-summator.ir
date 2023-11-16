@@ -1,0 +1,11 @@
+
+fn Summator
+    stackframe
+
+    arg int32 primary
+    arg int32 second
+
+    Summator_RESULT = add primary second
+    ret Summator_RESULT
+
+    endstackframe

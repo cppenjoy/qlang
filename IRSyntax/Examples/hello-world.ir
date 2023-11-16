@@ -1,0 +1,10 @@
+
+fn Main
+    stackframe
+
+    arg int32 argc
+    arg @string argv 
+
+    print "Hello World!"
+
+    endstackframe

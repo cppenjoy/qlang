@@ -61,7 +61,7 @@ module SemaDefinition =
                 | Literal.BooleanLiteral x -> typeOfLiteral <- TBool
                 | _ -> throwError $"The type {(typeOfLiteral.ToString())} is undefined"
 
-                if not(typeOfLiteral = TAny) && not(typeOfLiteral = excepted)
+                if not(typeOfLiteral = TAny) && not(typeOfLiteral = toNumberType(excepted))
                 then 
                     throwError $"Type incompatibility. The Type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}"
 
