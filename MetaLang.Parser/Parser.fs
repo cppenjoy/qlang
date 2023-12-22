@@ -1,7 +1,9 @@
 namespace MetaLang.Parser
 
-open Fastenshtein
+open System
+open System.Text
 open System.Collections.Generic
+open Fastenshtein
 open MetaLang.Parser.Lexer
 open MetaLang.Parser.SymbolTable
 open MetaLang.ErrorHandling
@@ -15,23 +17,61 @@ module ParserDefinition =
 
     type ParserResults() = 
 
-        member val Tree: List<IVisitable> = List<IVisitable>() with get
-        member val Errors: List<Error> = List<Error>() with get
-        member val SymbolTable: List<Symbol> = List<Symbol>() with get
+        member val Tree: List<IVisitable> = new List<IVisitable>() with get
+        member val Errors: List<Error> = new List<Error>() with get
+
+        /// <summary>
+        /// lexical scope identifeir * symboltable
+        /// </summary>
+        member val SymbolTables: Dictionary<string, SymbolTable> = new Dictionary<string, SymbolTable>() with get
 
     type Parser(_tokens: List<Token>) =
 
         member val Tokens: List<Token> = _tokens with get
 
-        member this.Parse(): ParserResults =
+        member this.Parse(?trace: bool): ParserResults =
+
+            let _trace = defaultArg trace false
 
             let parserResults: ParserResults = ParserResults()
-
             let mutable pos = 0
+
+            let mutable currentScope = ""
+
+            let pushScope identifier =
+                currentScope <- identifier
+                parserResults.SymbolTables.Add(identifier, new SymbolTable())
+
+            let getScope identifier =
+                parserResults.SymbolTables.[identifier]
+
+            let generateScopeIdentifier (signature: string) length =
+
+                let charTable = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_"
+
+                let randomGenerator = new Random()
+                let resultContainer = new StringBuilder()
+
+                resultContainer.Append(signature) |> ignore
+
+                for i in 1..length do
+                    resultContainer.Append(charTable.[randomGenerator.Next(0, charTable.Length)]) |> ignore
+
+                resultContainer.ToString()
+
+            pushScope "global"            
 
             let getMirrorType(src: string): string =
 
+                let lev: Levenshtein = new Levenshtein("int8")
+
+                //for item in ["int16"; "int32"; "int64"] do
+                  //  let result: int = lev.DistanceFrom item
+
                 ""
+
+            let lookback() =
+                    this.Tokens.[pos - 2]
 
             let next(): Token =
 
@@ -43,27 +83,30 @@ module ParserDefinition =
                 else 
                     Token(EOF, "")
 
-            let inline isOp(token: Token): bool =
+            let inline report (message): unit =
+                if _trace then
+                    printfn message
 
+            let inline isOp(token: Token): bool =
                 match token.Type with
                 | Operator -> true
                 | _ -> false
 
             let inline isType(token: Token): bool =
                 match token.Type with
-                | KeywordString | KeywordBool | KeywordArray | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
+                | KeywordString | KeywordBool | KeywordArray | KeywordInt8 | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
                 | _ -> false
 
             let inline throwError(what: string): Token =
-
                 parserResults.Errors.Add ( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos) )
                 Token(TokenType.Error, "")
 
             let inline throwWarning(what: string): unit =
-
                 parserResults.Errors.Add( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos, ErrorLevel.Warning) )
 
             let rec parseBinaryExpression(): Expression =
+
+                report "parsing binary expression....."
 
                 pos <- pos - 1
 
@@ -71,24 +114,30 @@ module ParserDefinition =
                 next() |> ignore
                 let secondExpression: Expression = parseExpression()
 
-                let Node = BinaryExpression(Literal.NumberLiteral firstExpression, this.Tokens.[pos - 1], secondExpression)
+                let Node = BinaryExpression(firstExpression, this.Tokens.[pos - 1], secondExpression)
 
                 Expression.BinaryExpression Node
 
             and parseNumber(): Token =
 
+                report "parsing number....."
+
                 let primary: Token = next()
 
                 match primary.Type with
-                | TokenType.NumberLiteral -> primary
+                | TokenType.NumberLiteral ->                     
+                    primary
 
-                | _ -> throwError "You cannot use NaN in binary expressions"
+                | _ -> throwError $"You cannot use NaN in binary expressions. Ref: {primary.Type.ToString()}"
 
             and parseType(): TypeVariant =
 
+                report "parsing type....."
+
                 let primary: Token = next()
 
                 match primary.Type with
+                | KeywordInt8 -> TInt8
                 | KeywordInt16 -> TInt16
                 | KeywordInt32 -> TInt32
                 | KeywordInt64 -> TInt64
@@ -96,19 +145,21 @@ module ParserDefinition =
                 | KeywordBool -> TBool
                 | _ ->
 
-                    let existOrNot: bool = List.exists (fun (x: Symbol) -> x.Alias.Identifier = (Identifier.Identifier(primary.Lexeme))) (parserResults.SymbolTable |> Seq.toList)
+                    let existOrNot = (getScope "global").Exist (Identifier.Identifier(primary.Lexeme))
 
                     match existOrNot with
                     | true ->
-                        let typeOf = List.find (fun (x: Symbol) -> x.Alias.Identifier = (Identifier.Identifier(primary.Lexeme))) (parserResults.SymbolTable |> Seq.toList)
+                        let typeof = (getScope "global").Get (Identifier.Identifier(primary.Lexeme))
 
-                        typeOf.Alias.TypeOfElem
+                        typeof.Alias.TypeOfElem
 
                     | _ ->
                         throwError $"The type {primary.Lexeme} is undefined, did you man {getMirrorType primary.Lexeme}" |> ignore
                         TInt32
 
             and parseIdentifier(): Identifier =
+
+                report "parsing identifier....."
 
                 let primary: Token = next()
 
@@ -120,16 +171,35 @@ module ParserDefinition =
                     identifier
 
                 | _ -> 
-                    throwError "Unrecognized identifier" |> ignore
+                    throwError $"Unrecognized identifier\n Note: unrecognized identifier\n\t| {lookback().Lexeme} {primary.Lexeme} <- this is a bad identifier" |> ignore
                     Identifier.Identifier("")
 
             and parseExpression(): Expression =
+
+                report "parsing expression....."
 
                 let primary: Token = next()
 
                 match primary.Type with
 
-                | LPair -> parseExpression()
+                | LPair -> 
+
+                    if isType(next())
+                    then
+                        pos <- pos - 1
+
+                        let typeOf = parseType()
+
+                        next() |> ignore // Skip the ) symbol
+                        let identifier = parseIdentifier()
+
+                        Expression.CastExpression (CastExpression(typeOf, identifier))
+                    
+                    else
+                        let expression = parseExpression()
+                        next() |> ignore
+
+                        expression
 
                 | TokenType.Identifier -> 
                 
@@ -159,43 +229,20 @@ module ParserDefinition =
                         parseBinaryExpression()
 
                     | _ ->
-                        pos <- pos - 1
+                        pos <- pos - 2
                         
-                        let literal = Literal.NumberLiteral this.Tokens.[pos]
-
-                        Expression.Literal(literal)
+                        let literal: Token = parseNumber()
+                        Expression.Literal (NumberLiteral(literal))
 
                 | _ ->
 
-                    if isType(primary)
-                    then
-                        pos <- pos - 1
-
-                        let typeOf = parseType()
-                        let expression = parseExpression()
-
-                        Expression.CastExpression (CastExpression(typeOf, expression))
-
-                    else
-                        throwError $"{primary.Lexeme} - incomplete expression" |> ignore
-                        Expression.EmptyNode (EmptyNode ())
-
-//    
-//            let parseArrayDeclStmt(): IVisitable =
-//
-  //              let identifier: Identifier = parseIdentifier()
-//
-  //              match next().Type with
-    //////            | TokenType.Punctuator when this.Tokens.[pos - 1].Lexeme = ":" ->
-////
-    //                let typeOfArrayElem: TypeVariant = parseType()
-//
-  //                  match next().Type with
-    //                | _ -> throwError "Expected array initialization"
-//
-  //              | _ -> throwError "When declaring an array, an explicit annotation of the type of elements of this array is required"
+                    throwError $"{primary.Lexeme} - incomplete expression\n Note: link to the statement\n\t| {lookback().Lexeme}" |> ignore
+                    Expression.EmptyNode (EmptyNode ())
 
             let parseUsingDeclStmt() : IVisitable =
+
+                report "parsing using statement....."
+
 
                 let identifier: Identifier = parseIdentifier()
                 let primary: Token = next()
@@ -205,18 +252,22 @@ module ParserDefinition =
 
                     let Type = parseType()
 
-                    let AliasData: AliasData = AliasData(identifier, Type)
-                    let AliasSymbol: Symbol = Symbol(Alias, TInt32, uint32 primary.Line, _aliasData = AliasData)
+                    match (getScope "global").Exist identifier with
+                    | true -> 
+                        throwError $"The identifier {identifier} already defined {Type.ToString()}" |> ignore
+                        EmptyNode()
 
-                    parserResults.SymbolTable.Add AliasSymbol
-
-                    UsingDeclStmt(identifier, Type)
+                    | _ ->
+                        (getScope "global").PushAlias identifier Type primary.Line
+                        UsingDeclStmt(identifier, Type)
 
                 | _ -> 
                     throwError "Operator expected =" |> ignore
                     EmptyNode ()
 
             let parseVarDeclStmt(): IVisitable =            
+
+                report "parsing var statement....."
 
                 let identifier: Identifier = parseIdentifier()
                 let optionalCheck: Token = next()
@@ -232,15 +283,31 @@ module ParserDefinition =
 
                     let expression = parseExpression()
 
-                    let Symbol = Symbol(SymbolType.Variable, typeOfVar, uint32 optionalCheck.Line)
-                    VarStmt(identifier, typeOfVar, expression)
+                    match (getScope currentScope).Exist identifier with
+                    | true -> 
+                        let symbol = (getScope currentScope).Get identifier
+
+                        throwError $"Some error occurred. The {symbol.Alias.Identifier} already defined in line {symbol.LineOfDeclaration}" |> ignore
+                        EmptyNode()
+
+                    | _ ->
+                        (getScope currentScope).PushVariable identifier typeOfVar optionalCheck.Line
+                        VarStmt(identifier, typeOfVar, expression)
 
                 | Operator when optionalCheck.Lexeme = "=" -> 
                     
                     let expression = parseExpression()
 
-                    let Symbol = Symbol(SymbolType.Variable, typeOfVar, uint32 optionalCheck.Line)
-                    VarStmt(identifier, typeOfVar, expression)
+                    match (getScope currentScope).Exist identifier with
+                    | true -> 
+                        let symbol = (getScope currentScope).Get identifier
+
+                        throwError $"Some error occurred. The {symbol.Alias.Identifier} already defined in line {symbol.LineOfDeclaration}" |> ignore
+                        EmptyNode()
+
+                    | _ ->
+                        (getScope currentScope).PushVariable identifier typeOfVar optionalCheck.Line
+                        VarStmt(identifier, typeOfVar, expression)
 
                 | _ ->
 
@@ -249,14 +316,14 @@ module ParserDefinition =
 
             let parseAssignExpression(): IVisitable =
 
+                report "parsing assign expression....."
+
                 let identifier = parseIdentifier()
                 let primary: Token = next()
 
                 match primary.Type with
                 | Punctuator when primary.Lexeme = "<-" -> 
-
                     let expression: Expression = parseExpression()
-
                     AssignStmt(identifier, expression)
 
                 | _ -> 
@@ -265,25 +332,41 @@ module ParserDefinition =
 
             let parseReturnStmt(): IVisitable =
 
+                report "parsing return expression....."
+
                 let expression: Expression = parseExpression()
 
                 PrintStmt.PrintStmt(expression)
 
             let parsePrintStmt(): IVisitable =
 
+                report "parsing print statement....."
+
+
                 let expression: Expression = parseExpression()
 
                 PrintStmt.PrintStmt(expression)
 
-            let parseStatement() =
+            let rec parseStatement() =
+
+                report "parsing statement....."
 
                 match next().Type with
-                | KeywordPrint -> parsePrintStmt()
+                | KeywordPrint ->
+                    parsePrintStmt()
+                
+                | LBrace ->
+                    printfn "%s" (generateScopeIdentifier "" 20)
+                    pushScope (generateScopeIdentifier "" 20)
+                    parseStatement()
+
+                | RBrace ->
+                    EmptyNode ()
+
                 | KeywordLet -> parseVarDeclStmt()
                 | KeywordUsing -> parseUsingDeclStmt()
                 | KeywordReturn -> parseReturnStmt()
                 | TokenType.Identifier -> 
-                
                     pos <- pos - 1
                     parseAssignExpression()
                 
@@ -292,6 +375,8 @@ module ParserDefinition =
                     EmptyNode ()
 
             let rec parse() =
+
+                report "start parsing....."
 
                 match next().Type with
                 | EOF -> ()
@@ -305,5 +390,8 @@ module ParserDefinition =
                     parserResults.Tree.Add stmt
                     parse()
 
+
             parse()
+            
+            report "parsing done....."
             parserResults

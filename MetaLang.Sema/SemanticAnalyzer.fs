@@ -16,58 +16,78 @@ module SemaDefinition =
     type SemaResults() =
         member val Errors: List<Error> = List<Error>() with get
 
-    type SemaAnalyzer(_symbolTable: List<Symbol>, ?_semaTrace: bool) =
+    type SemaAnalyzer(_symbolTables: Dictionary<string, SymbolTable>, ?_semaTrace: bool) =
 
         let semaTrace = defaultArg _semaTrace false
 
         member val Results = SemaResults() with get
-        member val SymbolTable = _symbolTable with get
+        member val SymbolTables: Dictionary<string, SymbolTable> = _symbolTables with get
 
         member val Trace = semaTrace with get
         
+        member private this.toTypeVariant (token: Token): TypeVariant =
+
+            match token.LiteralType with
+                | LiteralVariant.Integer8 -> TInt8
+                | LiteralVariant.Integer16 -> TInt16
+                | LiteralVariant.Integer -> TInt32
+                | LiteralVariant.Integer64 -> TInt64
+                | LiteralVariant.Float -> TDouble
+                | _ -> TBad
+
         member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant): unit =
 
             let excepted = defaultArg _excepted TAny
 
-            let throwError(what): unit =
-                this.Results.Errors.Add (Error(what, 0, 0))
+            let inline throwError(what, line, pos): unit =
+                this.Results.Errors.Add (Error(what, line, pos))
 
-            let toNumberType(typeOf): TypeVariant =
+            let inline toNumberType(typeOf): TypeVariant =
                 match typeOf with
-                | TInt16 | TInt32 | TInt64 | TFloat | TDouble -> TNumber
+                | TInt8 | TInt16 | TInt32 | TInt64 | TFloat | TDouble -> TNumber
                 | _ -> TBad // Bad Cast Type
 
-            let isNumberType(typeOf): bool =
+            let inline isNumberType(typeOf): bool =
                 not(toNumberType(typeOf) = TBad)
 
-            match expression with 
+            match expression with
+            
+            | Expression.CastExpression x ->
+
+                (this :> IVisitor).Visit x
+
             | Expression.Identifier x ->
 
                 ()
 
             | Expression.Literal x ->
 
+                let mutable lexemeOfLiteral: string = ""
                 let mutable typeOfLiteral: TypeVariant = TAny
+
+                let mutable pos = 0
+                let mutable line = 0
 
                 match x with
 
                 | Literal.StringLiteral x -> typeOfLiteral <- TString
                 | Literal.NumberLiteral (token) ->
-                    
-                    match token.LiteralType with
-                    | Integer -> typeOfLiteral <- TInt32
-                    | Float -> typeOfLiteral <- TDouble
+                
+                    typeOfLiteral <- this.toTypeVariant(token)
+
+                    pos <- token.Pos
+                    line <- token.Line
+                    lexemeOfLiteral <- token.Lexeme
 
                 | Literal.BooleanLiteral x -> typeOfLiteral <- TBool
-                | _ -> throwError $"The type {(typeOfLiteral.ToString())} is undefined"
 
-                if not(typeOfLiteral = TAny) && not(typeOfLiteral = toNumberType(excepted))
+                if not(typeOfLiteral = excepted)
                 then 
-                    throwError $"Type incompatibility. The Type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}"
+                    throwError ($"Type incompatibility. The type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexemeOfLiteral}  ", line, pos)
 
-            | Expression.BinaryExpression (BinaryExpression (_, _, expr)) -> 
+            | Expression.BinaryExpression (BinaryExpression (token, _, expr)) -> 
             
-                this.TypeCheckExpression(expr, TNumber)
+                this.TypeCheckExpression(expr, this.toTypeVariant(token))
                 ()
 
             | _ -> ()
@@ -105,4 +125,8 @@ module SemaDefinition =
             member this.Visit(returnStmt: ReturnStmt): unit =
                 match returnStmt with
                 | ReturnStmt (expr) -> this.TypeCheckExpression(expr)
+                ()
+
+            member this.Visit(castExpression: CastExpression): unit =
+                
                 ()

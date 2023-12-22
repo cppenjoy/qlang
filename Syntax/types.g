@@ -1,6 +1,7 @@
 # types
 
 number-type ->
+    | 'int8'
     | 'int16'
     | 'int32'
     | 'int64'
@@ -9,6 +10,7 @@ number-type ->
     | 'double'
 
 type -> 
+    | 'int8'
     | 'int16'
     | 'int32'
     | 'int64'

@@ -15,7 +15,7 @@ literal ->
     | boolean
 
 cast-expression ->
-    type expression
+    '(' type ')' identifier
 
 call-expression ->
     identifier '(' call-param ')'
@@ -35,6 +35,11 @@ op ->
     | '*'
     | '/'
 
+integer-suffix ->
+    | 'b' // int8
+    | 's' // int16
+    | 'l' // int64
+
 identifier -> ([a-zA-Z][0..9]?)*
-number -> [0..9]+ (. [0..9])?
+number -> integer-suffix? [0..9]+ (. [0..9])?
 string -> '"' [any]* '"'

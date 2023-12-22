@@ -1,6 +1,6 @@
 namespace MetaLang.Service
 
-module CompilerDefinition =
+module CompilerDriverDefinition =
 
     open System.Collections.Generic
     open MetaLang.Parser
@@ -48,15 +48,15 @@ module CompilerDefinition =
             // Lexer Trace
                 if this.Options.LexerTrace
                     then
-                        printf "====Tokens from module %s====" moduleInst.Name
+                        printf "\n====Tokens from module %s====" moduleInst.Name
 
                         for i in lexerResult.Tokens do
-                            printfn $"\nToken: [type {i.Type}, lexeme {i.Lexeme}, line {i.Line}, position {i.Pos}]"
+                            printfn $"\nToken: [type {i.Type}, lexeme {i.Lexeme}, line {i.Line}, position {i.Pos}, literal-type {i.LiteralType}]"
 
             // Parser
 
                 let parser: Parser = Parser(tokens)
-                let parserResults: ParserResults = parser.Parse()
+                let parserResults: ParserResults = parser.Parse(if this.Options.ParserTrace then true else false)
 
                 moduleInst.Errors.AddRange(parserResults.Errors)
 
@@ -69,7 +69,7 @@ module CompilerDefinition =
                         node.Accept(printVisitor)
 
             // Semantic
-                let semanticAnalyzer: SemaAnalyzer = SemaAnalyzer(parserResults.SymbolTable)
+                let semanticAnalyzer: SemaAnalyzer = SemaAnalyzer(parserResults.SymbolTables)
 
                 for node in parserResults.Tree do
                     node.Accept(semanticAnalyzer)

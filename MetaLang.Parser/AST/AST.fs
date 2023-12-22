@@ -16,6 +16,7 @@ module AST =
         abstract member Visit: DeclArrayStmt -> unit
         abstract member Visit: UsingDeclStmt -> unit
         abstract member Visit: ReturnStmt -> unit
+        abstract member Visit: CastExpression -> unit
         abstract member Visit: EmptyNode -> unit
 
     and Identifier =
@@ -38,7 +39,7 @@ module AST =
         | EmptyNode of EmptyNode
 
     and CastExpression =
-        | CastExpression of TypeVariant * Expression
+        | CastExpression of TypeVariant * Identifier
 
     and ReturnStmt =
         | ReturnStmt of Expression
@@ -61,7 +62,7 @@ module AST =
                 ()
 
     and BinaryExpression =
-        | BinaryExpression of Literal * Token * Expression
+        | BinaryExpression of Token * Token * Expression
 
     and AssignStmt = 
         | AssignStmt of Identifier * Expression

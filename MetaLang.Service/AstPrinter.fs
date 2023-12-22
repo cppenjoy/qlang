@@ -17,9 +17,13 @@ type AstPrinter() =
             printfn "Visited PrintStmt"
             ()
 
+        member this.Visit(castExpression: CastExpression): unit =
+            ()
+
         member this.Visit(declVarStmt: DeclVarStmt): unit =
             match declVarStmt with
-            | VarStmt (identifier, typeOf, _) -> printfn $"Visited DeclVarStmt, Identifier: {identifier}, Type: {typeOf.ToString()}"
+            | VarStmt (identifier, typeOf, expr) -> 
+                printfn $"Visited DeclVarStmt, Identifier: {identifier}, Type: {typeOf.ToString()}"
             ()
 
         member this.Visit(emptyNode: EmptyNode): unit =

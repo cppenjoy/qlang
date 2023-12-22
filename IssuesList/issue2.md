@@ -9,7 +9,7 @@ Introduce an explicit type conversion operator, and at the same time maintain se
 # What needs to be changed
 
  * grammar, 
-<<<<<<< HEAD
+<<<<<<< HEADS
 =======
  * sema rules, 
  * lexer, 

@@ -27,6 +27,7 @@ module TokenDefinition =
         | KeywordPrint // print
         | KeywordString // string
 
+        | KeywordInt8 // int8
         | KeywordInt16 // int16
         | KeywordInt32 // int32
         | KeywordInt64 // int64
@@ -46,8 +47,11 @@ module TokenDefinition =
 
     type LiteralVariant =
         | None = 0
-        | Integer = 1
-        | Float = 2
+        | Integer8 = 1
+        | Integer16 = 2
+        | Integer = 3
+        | Integer64 = 4
+        | Float = 5
 
     type Token(TokenType: TokenType, TokenLexeme: string, ?TokenLine: int, ?TokenPos: int, ?LiteralType: LiteralVariant) = 
 
@@ -66,6 +70,7 @@ module TokenDefinition =
             ("let", TokenType.KeywordLet);
             ("print", TokenType.KeywordPrint);
 
+            ("int8", TokenType.KeywordInt8);
             ("int16", TokenType.KeywordInt16);
             ("int32", TokenType.KeywordInt32);
             ("int64", TokenType.KeywordInt64);
@@ -101,6 +106,8 @@ module LexerDefinition =
         let mutable pos: int = 0
         let mutable offset: int = 0
 
+        let mutable inlinePos: int = 1
+
         member val Source = _source with get
         
         member private this.is_end(offset: int): bool =
@@ -112,7 +119,13 @@ module LexerDefinition =
                 "\\0".[0]
             else
                 let element = this.Source.[pos]
+
                 pos <- pos + 1
+
+                match element with
+                | '\n' -> inlinePos <- 1
+                | _ -> inlinePos <- inlinePos + 1
+
                 element
 
         member private this.peek(offset: int): char =
@@ -134,13 +147,13 @@ module LexerDefinition =
 
             if (this.is_end(0) && not(this.next() = '"'))
             then
-                results.Errors.Add( Error("incomplete string literal", line, pos) )
+                results.Errors.Add( Error("incomplete string literal", line, inlinePos) )
             else 
                 this.next() |> ignore
 
                 let value: string = this.Source.Substring(offset, pos - offset)
 
-                results.Tokens.Add(Token(TokenType.StringLiteral, value, line, pos))
+                results.Tokens.Add(Token(TokenType.StringLiteral, value, line, inlinePos))
                 ()
 
         member private this.tokenize_identifier(results: LexerResults): unit = 
@@ -152,14 +165,21 @@ module LexerDefinition =
 
             if Map.containsKey value KeywordAsToken 
             then
-                results.Tokens.Add(Token(KeywordAsToken.[value], value, line, pos))
+                results.Tokens.Add(Token(KeywordAsToken.[value], value, line, inlinePos))
             else
-                results.Tokens.Add(Token(TokenType.Identifier, value, line, pos))
+                results.Tokens.Add(Token(TokenType.Identifier, value, line, inlinePos))
             ()
 
-        member private this.tokenize_number(results: LexerResults): unit = 
+        member private this.tokenize_number(results: LexerResults, ?prefix): unit = 
 
-            let mutable literalType: LiteralVariant = LiteralVariant.Integer
+            let prefixOfNumber = defaultArg prefix ' '
+
+            let mutable literalType: LiteralVariant = 
+                match prefixOfNumber with
+                | 'b' -> LiteralVariant.Integer8
+                | 's' -> LiteralVariant.Integer16
+                | 'l' -> LiteralVariant.Integer64
+                | _ -> LiteralVariant.Integer
 
             while ( Char.IsDigit(this.peek(0)) && not(this.is_end(0)) ) do
                 this.next() |> ignore
@@ -175,16 +195,22 @@ module LexerDefinition =
                   
             let value: string = this.Source.Substring(offset, pos - offset)
 
-            results.Tokens.Add(Token(TokenType.NumberLiteral, value, line, pos, literalType))
+
+
+            results.Tokens.Add(Token(TokenType.NumberLiteral, value, line, inlinePos, literalType))
             ()
 
         member this.Tokenize(): LexerResults = 
 
             let results: LexerResults = LexerResults()
 
+            let IsIntegerPrefix(ch: char): bool =
+                match ch with
+                | 'b' | 's' | 'l' -> true
+                | _ -> false
+
             let pushToken(_type: TokenType, _lexeme: string): unit = 
-                results.Tokens.Add(Token(_type, _lexeme, line, pos))
-                ()
+                results.Tokens.Add(Token(_type, _lexeme, line, inlinePos))
 
             while not (this.is_end(0)) do
                 
@@ -216,6 +242,9 @@ module LexerDefinition =
                     this.next() |> ignore
                     
 
+                | '{' -> pushToken(TokenType.LBrace, "{")
+                | '}' -> pushToken(TokenType.RBrace, "}")
+                
                 | '+' -> pushToken(TokenType.Operator, "+")
                 | '-' -> pushToken(TokenType.Operator, "-")
                 | '/' when not(this.peek(0) = '/') -> pushToken(TokenType.Operator, "/")
@@ -235,8 +264,11 @@ module LexerDefinition =
                 | '(' -> pushToken(TokenType.LPair, "(")
                 | ')' -> pushToken(TokenType.RPair, ")")
                 
-                | _ when Char.IsLetter(ch) -> this.tokenize_identifier(results)
                 | _ when Char.IsDigit(ch) -> this.tokenize_number(results)
+                | _ when IsIntegerPrefix(ch) && Char.IsDigit(this.next()) ->                
+                    this.tokenize_number(results, ch)
+                | _ when Char.IsLetter(ch) -> this.tokenize_identifier(results)
+
                 | _ -> ()
 
 
