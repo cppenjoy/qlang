@@ -23,13 +23,12 @@ Compiler Status
 | CLI | Ready | 🟢 |
 | Lexer | Ready | 🟢 |
 | Parser | Partly | 🟡 |
-| Semantic Analyzer | Partly | 🟢 
+| Semantic Analyzer | Partly | 🟡 
 | Intermediate Representation | Planned | ⚪ |
 | Optimizations | Not Ready | ⚫ |
 | Supercompilation | Planned | ⚪ |
-| Linker | Not Ready | ⚫ |
 | CodeGen to x86 | Planned | ⚪ |
-| CodeGen to Wasm | Planned | ⚪ |
+| CodeGen to Wasm | Thinking About It, Maybe it will, maybe not | 🟠 |
 | CodeGen to x86-x64 | Thinking About It | 🟠 |
 | CodeGen to ARM | Thinking About It | 🟠 |
 | Bootstrapping | Thinking About It | 🟠 |
@@ -42,8 +41,8 @@ Language Status
 | Grammar | Ready | 🟢 |
 | Type System Rules | Ready | 🟢 |
 | API For Code Analysis | Ready | 🟢 |
-| Documentation | Planned | ⚪ |
-| Playground site for MetaLang(Include Online Code Editor, Compilation, Decompilation)  |  Planned | ⚪ |
+| Documentation | Planned | ⚫ |
+| Playground site for MetaLang(Include Online Code Editor, Compilation, Decompilation)  |  Not Ready | 🟠 |
 | Standart Library (with IO Module for Linux and Windows) | Thinking About It | 🟠 |
 | OOP | Thinking About It | 🟠 |
 | Reflection | Thinking About It | 🟠 |
@@ -61,10 +60,10 @@ Here are some code examples on MetaLang that demonstrate its main features and s
 
 ```fs
 // Declaring an alias for a type
-using args = array string
+using args = array of string
 
 // Entry Point
-fn main(number argc, args argv) number
+fn main(int argc, args argv) int
 {
     for i of 0 to argc
     {
@@ -84,7 +83,7 @@ fn main(number argc, args argv) number
 If you want to contribute to the development of MetaLang, you can follow these steps:
 
 - Make a fork of this repository on GitHub
-- Clone your fork to your computer using the `git clone' command https://github.com/your_username/MetaLang .git`
+- Clone your fork to your computer using the `git clone' command https://github.com/Lofinaf/MetaLang/MetaLang.git`
 - Create a new branch for your changes using the command `git checkout -b new_branch`
 - Make your changes to the code and add them to the index using the `git add' command.`
 - Commit your changes using the command `git commit -m "your message"`
@@ -103,7 +102,7 @@ Before you start, you need to have the following tools installed on your system:
 
 - Git: a version control system that lets you clone the MetaLang repository. You can download it from https://git-scm.com/.
   
-- .NET 5.0 SDK: a software development kit that provides the dotnet CLI and the libraries needed to build .NET applications. You can download it from https://dotnet.microsoft.com/download/dotnet/5.0.
+- .NET 5.0 SDK or newest: a software development kit that provides the dotnet CLI and the libraries needed to build .NET applications. You can download it from https://dotnet.microsoft.com/download/dotnet/5.0.
   
 - Visual Studio 2019 (optional): an integrated development environment that provides a graphical interface for building .NET applications. You can download it from https://visualstudio.microsoft.com/vs/.
 
@@ -121,13 +120,13 @@ This will create a folder called MetaLang in your current directory, containing 
 
 There are two ways to build the project, using dotnet CLI or Visual Studio.
 
-Using dotnet CLI:
+Using dotnet CLI (Any):
 
 - Make sure you have the latest version of .NET SDK installed on your machine. You can check the version by running `dotnet --version` in a terminal.
 - Navigate to the root folder of the project, where the `MetaLang.sln` file is located.
 - Run `dotnet build --no-self-contained -c "Release" -o bin` to build the project in release mode and output the binaries to the `bin` folder.
 
-Using Visual Studio:
+Using Visual Studio (Windows only):
 
 - Make sure you have Visual Studio 2019 or later installed on your machine, with the F# [language support](https://learn.microsoft.com/en-us/dotnet/fsharp/get-started/get-started-visual-studio) enabled.
 - Open the `MetaLang.sln` file in Visual Studio.
