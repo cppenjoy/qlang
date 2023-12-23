@@ -1,4 +1,4 @@
 # decl-var
 
 decl-var -> 
-    'let' identifier (':' type)? '=' expression
+    'static' 'let' identifier (':' type)? '=' expression

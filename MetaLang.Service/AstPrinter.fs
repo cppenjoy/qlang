@@ -42,3 +42,7 @@ type AstPrinter() =
         member this.Visit(returnStmt: ReturnStmt): unit =
             printfn "Visited ReturnStmt"
             ()
+
+        member this.Visit(declFnStmt: DeclFnStmt): unit =
+            printfn "Visited DeclFnStmt"
+            ()

@@ -25,18 +25,20 @@ module SymbolDefinition =
         member val Identifier: Identifier = identifier with get
         member val TypeOfElem: TypeVariant = _typeVar with get 
 
-    and FnData(typeofReturn: TypeVariant, signature: List<TypeVariant>) =
+    and FnData(typeofReturn: TypeVariant, signature: List<TypeVariant * Identifier>) =
 
         member val TypeofReturn: TypeVariant = typeofReturn with get
-        member val Signature: List<TypeVariant> = signature with get 
+        member val Signature: List<TypeVariant * Identifier> = signature with get 
 
-    and Symbol(_type: SymbolType, _info: TypeVariant, _decl: uint32, ?_arrayElem: ArrayElements
+    and Symbol(_type: SymbolType, _info: TypeVariant, _decl: uint32, ?_context
+                                                                    , ?_arrayElem: ArrayElements
                                                                     , ?_aliasData: AliasData
                                                                     , ?_fnData: FnData) =
 
         let arrayElem = defaultArg _arrayElem (ArrayElements())
         let aliasData = defaultArg _aliasData (AliasData((Identifier.Identifier ""), TInt32))
-        let fnData = defaultArg _fnData (FnData(TBad, List<TypeVariant>()))
+        let fnData = defaultArg _fnData (FnData(TBad, List<TypeVariant * Identifier>()))
+        let context = defaultArg _context ""
 
         member val Type: SymbolType = _type with get
         member val TypeInfo: TypeVariant = _info with get
@@ -46,11 +48,15 @@ module SymbolDefinition =
         member val ArrayElements: ArrayElements = arrayElem with get
         member val Alias: AliasData = aliasData with get
 
+        member val IsAlias: bool = false with get, set
+
+        member val Context = context with get
+
 
 [<AutoOpen>]
 module SymbolTable =
 
-    open SymbolDefinition
+    open SymbolDefinition   
 
     /// <summary>
     /// Provide a wrapper on list of symbols
@@ -68,6 +74,10 @@ module SymbolTable =
         member public this.Exist (identifier: Identifier) =
             List.exists (fun (x: Symbol) -> x.Alias.Identifier = identifier) (this.Symbols |> Seq.toList)
 
+        member public this.ExistAlias (identifier: Identifier) =
+            List.exists (fun (x: Symbol) -> x.Alias.Identifier = identifier && x.IsAlias) (this.Symbols |> Seq.toList)
+
+
         member public this.GetIfExist (identifier: Identifier) : (bool * Symbol) =
             let symbol = List.tryFind (fun (x: Symbol) -> x.Alias.Identifier = identifier) (this.Symbols |> Seq.toList)
 
@@ -83,16 +93,18 @@ module SymbolTable =
             let aliasData: AliasData = new AliasData(identifier, refType)
             let aliasSymbol: Symbol = new Symbol(SymbolType.Alias, TBad, uint32 line, _aliasData = aliasData)
 
+            aliasSymbol.IsAlias <- true
+
             this.PushSymbol aliasSymbol
 
-        member public this.PushVariable identifier typeofVariable line =
+        member public this.PushVariable scope identifier typeofVariable line =
             let aliasData: AliasData = new AliasData(identifier, TAny)
-            let variableSymbol = new Symbol(SymbolType.Variable, typeofVariable, uint32 line, _aliasData = aliasData)
+            let variableSymbol = new Symbol(SymbolType.Variable, typeofVariable, uint32 line, _context = scope, _aliasData = aliasData)
 
             this.PushSymbol variableSymbol
 
-        member public this.PushFunction identifier line (fnData: FnData) =
+        member public this.PushFunction scope identifier line (fnData: FnData) =
             let aliasData: AliasData = new AliasData(identifier, TAny)
-            let fnSymbol: Symbol = new Symbol(SymbolType.Fn, TBad, uint32 line, _aliasData = aliasData, _fnData = fnData)
+            let fnSymbol: Symbol = new Symbol(SymbolType.Fn, TBad, uint32 line, _context = scope, _aliasData = aliasData, _fnData = fnData)
 
             this.PushSymbol fnSymbol

@@ -3,6 +3,7 @@
     <AssemblyName>metalang</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+    <OtherFlags>--sig:Cli.fsi</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Program.fs" />

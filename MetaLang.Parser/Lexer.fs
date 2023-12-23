@@ -15,6 +15,8 @@ module TokenDefinition =
         | LBrace // {
         | RBrace // }
 
+        | Comma // ,
+
         | Semicolon
         | Punctuator
 
@@ -36,6 +38,7 @@ module TokenDefinition =
         | KeywordDouble // double
 
         | KeywordArray // array
+        | KeywordStatic // static
         | KeywordBool // bool
         | KeywordFn // fn
         | KeywordVoid // void
@@ -75,11 +78,13 @@ module TokenDefinition =
             ("int32", TokenType.KeywordInt32);
             ("int64", TokenType.KeywordInt64);
 
+            ("string", TokenType.KeywordString);
+
             ("float", TokenType.KeywordFloat);
-            ("float", TokenType.KeywordDouble);
+            ("double", TokenType.KeywordDouble);
 
             ("bool", TokenType.KeywordBool);
-            ("string", TokenType.KeywordString);
+            ("static", TokenType.KeywordStatic);
             ("fn", TokenType.KeywordFn);
             ("void", TokenType.KeywordVoid);
             ("array", TokenType.KeywordArray);
@@ -157,6 +162,8 @@ module LexerDefinition =
                 ()
 
         member private this.tokenize_identifier(results: LexerResults): unit = 
+
+            pos <- pos - 1
 
             while ( Char.IsLetterOrDigit(this.peek(0)) && not(this.is_end(0)) ) do
                 this.next() |> ignore
@@ -241,6 +248,8 @@ module LexerDefinition =
                     this.next() |> ignore
                     this.next() |> ignore
                     
+
+                | ',' -> pushToken(TokenType.Comma, ",")
 
                 | '{' -> pushToken(TokenType.LBrace, "{")
                 | '}' -> pushToken(TokenType.RBrace, "}")

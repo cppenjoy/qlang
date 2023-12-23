@@ -37,10 +37,16 @@ module ParserDefinition =
             let mutable pos = 0
 
             let mutable currentScope = ""
+            let mutable latestScope = Stack<string>()
 
             let pushScope identifier =
+                latestScope.Push currentScope
                 currentScope <- identifier
+
                 parserResults.SymbolTables.Add(identifier, new SymbolTable())
+
+            let recoveryScope () =
+                currentScope <- latestScope.Pop()
 
             let getScope identifier =
                 parserResults.SymbolTables.[identifier]
@@ -95,6 +101,7 @@ module ParserDefinition =
             let inline isType(token: Token): bool =
                 match token.Type with
                 | KeywordString | KeywordBool | KeywordArray | KeywordInt8 | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
+                | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme)) -> true
                 | _ -> false
 
             let inline throwError(what: string): Token =
@@ -291,7 +298,7 @@ module ParserDefinition =
                         EmptyNode()
 
                     | _ ->
-                        (getScope currentScope).PushVariable identifier typeOfVar optionalCheck.Line
+                        (getScope currentScope).PushVariable currentScope identifier typeOfVar optionalCheck.Line
                         VarStmt(identifier, typeOfVar, expression)
 
                 | Operator when optionalCheck.Lexeme = "=" -> 
@@ -306,7 +313,7 @@ module ParserDefinition =
                         EmptyNode()
 
                     | _ ->
-                        (getScope currentScope).PushVariable identifier typeOfVar optionalCheck.Line
+                        (getScope currentScope).PushVariable currentScope identifier typeOfVar optionalCheck.Line
                         VarStmt(identifier, typeOfVar, expression)
 
                 | _ ->
@@ -341,13 +348,155 @@ module ParserDefinition =
             let parsePrintStmt(): IVisitable =
 
                 report "parsing print statement....."
-
-
                 let expression: Expression = parseExpression()
 
                 PrintStmt.PrintStmt(expression)
 
-            let rec parseStatement() =
+            let rec parseFnDeclStmt(): IVisitable =
+
+                report "parsing fn decl statement....."
+
+                let identifier: Identifier = parseIdentifier()
+
+                let parseArgumentList(): List<TypeVariant * Identifier> =
+
+                    let result = List<TypeVariant * Identifier>()
+
+                    let rec parseParam() = 
+                          
+                        match isType(next()) with
+                        | true ->
+                            pos <- pos - 1
+
+                            let typeof = parseType()
+                            let argumentIdentifier = parseIdentifier()
+
+                            match next().Type with
+                            | RPair ->
+
+                                result.Add (typeof, argumentIdentifier)
+                                result
+                            
+                            | Comma ->
+                                result.Add (typeof, argumentIdentifier)
+                                parseParam()
+
+                            | _ ->
+                                throwError $"something went wrong" |> ignore
+                                new List<TypeVariant * Identifier>()
+
+
+                        | _ ->
+                            throwError $"something went wrong" |> ignore
+                            new List<TypeVariant * Identifier>()
+
+
+                    match next().Type with
+                    | TokenType.KeywordVoid ->
+                        next() |> ignore
+                        new List<TypeVariant * Identifier>()
+                
+                    | _ ->
+                        pos <- pos - 1
+                        parseParam()
+
+                match next().Type with
+                | LPair ->
+                    let argumentList = parseArgumentList()
+                    let optionalCheck = next()
+
+                    let mutable returnType = TInt32
+
+                    match optionalCheck.Type with
+                    | LBrace ->
+
+                        let fnData = FnData(returnType, argumentList)
+
+                        match (getScope currentScope).Exist (identifier) with
+                        | true -> 
+                            throwError $"The identifier {identifier} already defined in line {(getScope currentScope).Get(identifier).LineOfDeclaration }" |> ignore
+                        | _ ->
+
+                            (getScope currentScope).PushFunction currentScope identifier (_tokens.[pos - 1].Line) fnData 
+
+                            pushScope (generateScopeIdentifier $"{identifier.ToString()}" 9)
+
+
+                        let body = parseBody()
+
+                        let fnBody = FnBody.FnBody(body)
+                        let fnArgumentList = FnParamList.FnParamsNode(argumentList)
+                        let fnParams = FnParamDecl.ParamListNode(fnArgumentList)
+                        let fnNode = DeclFnStmt.FnDeclNode(identifier, returnType, fnParams, fnBody) 
+                           
+                        fnNode
+
+                    | _ when isType(optionalCheck) ->
+                        
+                        pos <- pos - 1
+                        returnType <- parseType()
+
+                        match next().Type with
+                        | LBrace ->
+
+                            let fnData = FnData(returnType, argumentList)
+
+                            match (getScope currentScope).Exist (identifier) with
+                            | true -> 
+                                throwError $"The identifier {identifier} already defined in line {(getScope currentScope).Get(identifier).LineOfDeclaration}" |> ignore
+                            | _ ->
+
+                                (getScope currentScope).PushFunction currentScope identifier (_tokens.[pos - 1].Line) fnData 
+
+                                pushScope (generateScopeIdentifier $"{identifier.ToString()}" 9)
+
+
+                            let body = parseBody()
+
+                            let fnBody = FnBody.FnBody(body)
+                            let fnArgumentList = FnParamList.FnParamsNode(argumentList)
+                            let fnParams = FnParamDecl.ParamListNode(fnArgumentList)
+                            let fnNode = DeclFnStmt.FnDeclNode(identifier, returnType, fnParams, fnBody) 
+
+                            let fnData = FnData(returnType, argumentList)
+                            fnNode
+
+                        | _ ->
+                            throwError "stupid idiot, where fn body?????" |> ignore
+                            EmptyNode()
+
+                    | _ ->
+                        throwError "except type or fn body decl" |> ignore
+                        EmptyNode()
+
+                | _ ->
+                    throwError "unfinished declaration" |> ignore
+                    EmptyNode()
+
+            and parseBody(): List<IVisitable> =
+
+                report "parsing body....."
+
+                let result = List<IVisitable>()
+
+                let rec parseStmt () =
+
+                    match next().Type with
+                    | EOF | RBrace ->
+                        ()
+
+                    | _ -> 
+
+                        pos <- pos - 1
+
+                        let stmt: IVisitable = parseStatement()
+                        
+                        result.Add stmt
+                        parseStmt()
+
+                result
+
+            and parseStatement() =
 
                 report "parsing statement....."
 
@@ -356,14 +505,15 @@ module ParserDefinition =
                     parsePrintStmt()
                 
                 | LBrace ->
-                    printfn "%s" (generateScopeIdentifier "" 20)
                     pushScope (generateScopeIdentifier "" 20)
                     parseStatement()
 
                 | RBrace ->
+                    recoveryScope()
                     EmptyNode ()
 
                 | KeywordLet -> parseVarDeclStmt()
+                | KeywordFn -> parseFnDeclStmt()
                 | KeywordUsing -> parseUsingDeclStmt()
                 | KeywordReturn -> parseReturnStmt()
                 | TokenType.Identifier -> 

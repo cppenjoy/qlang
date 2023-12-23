@@ -58,6 +58,7 @@ module SemaDefinition =
 
             | Expression.Identifier x ->
 
+                
                 ()
 
             | Expression.Literal x ->
@@ -81,7 +82,7 @@ module SemaDefinition =
 
                 | Literal.BooleanLiteral x -> typeOfLiteral <- TBool
 
-                if not(typeOfLiteral = excepted)
+                if not(typeOfLiteral = excepted) || typeOfLiteral = TAny
                 then 
                     throwError ($"Type incompatibility. The type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexemeOfLiteral}  ", line, pos)
 
@@ -128,5 +129,9 @@ module SemaDefinition =
                 ()
 
             member this.Visit(castExpression: CastExpression): unit =
+                
+                ()
+
+            member this.Visit(declFnStmt: DeclFnStmt): unit =
                 
                 ()

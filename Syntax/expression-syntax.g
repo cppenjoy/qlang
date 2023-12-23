@@ -24,7 +24,7 @@ call-param ->
     'void' | expression (',' expression)*
 
 if-expression ->
-    '(' expression ')' ':' expression
+    match expression ':' expression
 
 binary-expression ->
     number op expression

@@ -1,5 +1,6 @@
 namespace MetaLang.Parser
 
+open System.Collections.Generic
 open MetaLang.Parser.Lexer
 open TokenDefinition
 open TypeDefinition
@@ -13,6 +14,7 @@ module AST =
         abstract member Visit: AssignStmt -> unit
         abstract member Visit: PrintStmt -> unit
         abstract member Visit: DeclVarStmt -> unit
+        abstract member Visit: DeclFnStmt -> unit
         abstract member Visit: DeclArrayStmt -> unit
         abstract member Visit: UsingDeclStmt -> unit
         abstract member Visit: ReturnStmt -> unit
@@ -115,14 +117,21 @@ module AST =
                 ()
 
     and DeclFnStmt =
-        | FnDeclNode of Token * FnParamDecl
+        | FnDeclNode of Identifier * TypeVariant * FnParamDecl * FnBody
+
+        interface IVisitable with
+
+            member this.Accept(visitor: IVisitor): unit =
+
+                visitor.Visit this
+                ()
 
     and FnParamDecl =
         | Void of Token
         | ParamListNode of FnParamList
 
     and FnParamList =
-        | FnParamsNode of List<FnParam>
+        | FnParamsNode of List<TypeVariant * Identifier>
 
-    and FnParam =
-        | Param of Token * Token
+    and FnBody =
+        | FnBody of List<IVisitable>
