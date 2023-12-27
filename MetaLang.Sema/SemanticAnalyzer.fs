@@ -33,7 +33,13 @@ module SemaDefinition =
                 | LiteralVariant.Integer -> TInt32
                 | LiteralVariant.Integer64 -> TInt64
                 | LiteralVariant.Float -> TDouble
-                | _ -> TBad
+                | _ -> 
+                
+                    match token.Type with
+                    | TokenType.Identifier
+                    
+                    | _ ->
+                        TBad
 
         member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant): unit =
 
@@ -58,7 +64,18 @@ module SemaDefinition =
 
             | Expression.Identifier x ->
 
-                
+                match x with
+                | Identifier.Identifier (lexeme, scope) ->
+
+                    match this.SymbolTables.[scope].Exist (Identifier.Identifier(lexeme, "")) with
+                    | true ->
+                        let typeofIdentifier = this.SymbolTables.[scope].Get (Identifier.Identifier(lexeme, ""))
+
+                        if not(typeofIdentifier.TypeInfo = excepted) || typeofIdentifier.TypeInfo = TAny
+                        then 
+                            throwError ($"Type incompatibility. The type {typeofIdentifier.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexeme}  ", 0, 0)
+
+                    | _ -> throwError ($"The identifier {lexeme} does not exist in the current context", 0, 0)
                 ()
 
             | Expression.Literal x ->

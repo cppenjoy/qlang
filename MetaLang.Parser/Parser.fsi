@@ -146,7 +146,7 @@ namespace MetaLang.Parser
             
             abstract Visit: AssignStmt -> unit
         
-        and Identifier = | Identifier of string
+        and Identifier = | Identifier of string * string
         
         and Literal =
             | StringLiteral of string

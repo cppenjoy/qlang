@@ -1,13 +1,16 @@
 
 S -> (decl)
 
-decl -> (fn-decl | var-decl)*
+decl -> (extern-decl | fn-decl | var-decl)*
+
+extern-decl -?
+    'extern' identifier type-pack
 
 fn-decl -> 
     'fn' identifier
 
 var-decl ->
-    identifier '=' mnemonic
+    identifier '=' mnemonic | value
 
 mnemonic -> 
 # Magic
@@ -22,7 +25,11 @@ mnemonic ->
     mul-mnemonic
     div-mnemonic
 # control-flow
+    call-mnemonic
     ret-mnemonic
+# stack-manip
+    push-mnemonic
+    pop-mnemonic
 
 print-magic ->
     'print' value
@@ -51,6 +58,12 @@ div-mnemonic ->
 ret-mnemonic ->
     'ret' value
 
+push-mnemonic ->
+    'push' value
+
+pop-mnemonic ->
+    'pop' value
+
 value -> (identifier | number-literal | string-literal)
 
 type -> '@'? typeOf
@@ -60,6 +73,7 @@ typeOf ->
     'int16'
     'int32'
     'int64'
+    'string'
     'int128'
     'float16'
     'float32'
@@ -67,5 +81,5 @@ typeOf ->
     'float128'
 
 number-literal -> [0..9]*
-string-literal -> \' [any] \'
+string-literal -> ' [any] '
 identifier -> [a-zA-Z][0..9]*

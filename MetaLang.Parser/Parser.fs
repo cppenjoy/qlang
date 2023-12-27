@@ -101,7 +101,7 @@ module ParserDefinition =
             let inline isType(token: Token): bool =
                 match token.Type with
                 | KeywordString | KeywordBool | KeywordArray | KeywordInt8 | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
-                | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme)) -> true
+                | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme, "")) -> true
                 | _ -> false
 
             let inline throwError(what: string): Token =
@@ -111,13 +111,26 @@ module ParserDefinition =
             let inline throwWarning(what: string): unit =
                 parserResults.Errors.Add( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos, ErrorLevel.Warning) )
 
+            let parsePrimary(): Token =
+
+                report "parsing primary expression....."
+
+                let primary: Token = next()
+
+                match primary.Type with
+                | TokenType.NumberLiteral | TokenType.Identifier ->                     
+                   primary
+
+                | _ -> 
+                    throwError $"You cannot use NaN in binary expressions. Ref: {primary.Type.ToString()}"
+                    
             let rec parseBinaryExpression(): Expression =
 
                 report "parsing binary expression....."
 
                 pos <- pos - 1
 
-                let firstExpression: Token = parseNumber()
+                let firstExpression = parsePrimary()
                 next() |> ignore
                 let secondExpression: Expression = parseExpression()
 
@@ -152,11 +165,11 @@ module ParserDefinition =
                 | KeywordBool -> TBool
                 | _ ->
 
-                    let existOrNot = (getScope "global").Exist (Identifier.Identifier(primary.Lexeme))
+                    let existOrNot = (getScope "global").Exist (Identifier.Identifier(primary.Lexeme, ""))
 
                     match existOrNot with
                     | true ->
-                        let typeof = (getScope "global").Get (Identifier.Identifier(primary.Lexeme))
+                        let typeof = (getScope "global").Get (Identifier.Identifier(primary.Lexeme, ""))
 
                         typeof.Alias.TypeOfElem
 
@@ -173,13 +186,13 @@ module ParserDefinition =
                 match primary.Type with
                 | TokenType.Identifier -> 
                 
-                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme)
+                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme, currentScope)
 
                     identifier
 
                 | _ -> 
-                    throwError $"Unrecognized identifier\n Note: unrecognized identifier\n\t| {lookback().Lexeme} {primary.Lexeme} <- this is a bad identifier" |> ignore
-                    Identifier.Identifier("")
+                    throwError $"Unrecognized identifier\n Note: unrecognized identifier\n\t{lookback().Line} | {lookback().Lexeme} {primary.Lexeme} <- this is a bad identifier" |> ignore
+                    Identifier.Identifier("", "")
 
             and parseExpression(): Expression =
 
@@ -210,9 +223,18 @@ module ParserDefinition =
 
                 | TokenType.Identifier -> 
                 
-                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme)
+                    match next().Type with
+                    
+                    | Operator ->
 
-                    Expression.Identifier(identifier)
+                        pos <- pos - 1
+                        parseBinaryExpression()
+
+                    | _ ->
+                        pos <- pos - 2
+
+                        let identifier = parseIdentifier()
+                        Expression.Identifier(identifier)
                 
                 | TokenType.StringLiteral -> 
 
@@ -343,7 +365,7 @@ module ParserDefinition =
 
                 let expression: Expression = parseExpression()
 
-                PrintStmt.PrintStmt(expression)
+                ReturnStmt.ReturnStmt(expression)
 
             let parsePrintStmt(): IVisitable =
 

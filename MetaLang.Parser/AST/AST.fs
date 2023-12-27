@@ -22,7 +22,7 @@ module AST =
         abstract member Visit: EmptyNode -> unit
 
     and Identifier =
-        | Identifier of string
+        | Identifier of string * string
 
     and Literal =
         | StringLiteral of string

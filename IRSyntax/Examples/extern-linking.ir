@@ -1,0 +1,14 @@
+
+extern printfn (string, ...)
+
+fn Main
+    stackframe
+
+    arg int32 argc
+    arg @string argv 
+
+    push "%d"
+    push 0
+    call printfn
+
+    endstackframe
