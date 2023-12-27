@@ -6,7 +6,7 @@ Supercompilation is an optimization technique that allows you to transform progr
 
 ## Compiler and Language Status
 
-Color Table
+### Color Table
 | Color | Means |
 |-|-|
 | 🟢 | It's already done |
@@ -16,7 +16,7 @@ Color Table
 | 🟠 | Thinking About It, Maybe it will, maybe not |
 | 🟣 | Refused, and will not even be considered |
 
-Compiler Status
+### Compiler Status
 
 | Stage | Status | Color Status
 |-|-|-|
@@ -34,7 +34,7 @@ Compiler Status
 | Bootstrapping | Thinking About It | 🟠 |
 
 
-Language Status
+### Language Status
 
 | Stage | Status | Color Status
 |-|-|-|
@@ -58,14 +58,52 @@ If you want to contribute to the development of the project, then scroll below o
 
 Here are some code examples on MetaLang that demonstrate its main features and syntax:
 
-```fs
+```cs
 // Declaring an alias for a type
 using args = array of string
 
+// Aliases for C-Like types
+using char = int8
+using short = int16
+using int = int32
+using long = int64
+
+// Extern linking example
+extern printf(string, ...)
+
+// Global variable (without type annotation, by default is int32)
+let variableWithoutTypeAnnotation = 0
+
+// Global variable (with type annotation)
+let variableWithTypeAnnotation: int = 0 
+
+// Lexical scope demonstration
+{
+    let variableWithoutTypeAnnotation = 0
+    let variableWithTypeAnnotation: int = 0 
+
+    // Nested scope demonstration
+    {
+        let variableWithoutTypeAnnotation = 0
+        let variableWithTypeAnnotation: int = 0
+    }
+}
 // Entry Point
 fn main(int argc, args argv) int
 {
-    for i of 0 to argc
+    // Local variable(syntax same as declaring a global variable)
+    let someVariable = 0
+
+    // Declaring global variable in local scope
+    global someVariable = 0
+
+    // One line comment (C-Style)
+
+    /*
+        Multi line comment
+    */
+
+    for i in range(1, argc) 
     {
         if (argv[i] == "-h")
         {
@@ -77,15 +115,16 @@ fn main(int argc, args argv) int
     }
 }
 
+// Extended examples can be found in the examples folder
 ```
 # Contribute
 
 If you want to contribute to the development of MetaLang, you can follow these steps:
 
 - Make a fork of this repository on GitHub
-- Clone your fork to your computer using the `git clone' command https://github.com/Lofinaf/MetaLang/MetaLang.git`
+- Clone your fork to your computer using the `git clone` command https://github.com/Lofinaf/MetaLang/MetaLang.git`
 - Create a new branch for your changes using the command `git checkout -b new_branch`
-- Make your changes to the code and add them to the index using the `git add' command.`
+- Make your changes to the code and add them to the index using the `git add command.`
 - Commit your changes using the command `git commit -m "your message"`
 - Push your branch to GitHub using the `git push origin new_branch` command
 - Create a pull request on GitHub and wait for the review
