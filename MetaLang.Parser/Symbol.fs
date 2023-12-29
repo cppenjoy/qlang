@@ -36,7 +36,7 @@ module SymbolDefinition =
                                                                     , ?_fnData: FnData) =
 
         let arrayElem = defaultArg _arrayElem (ArrayElements())
-        let aliasData = defaultArg _aliasData (AliasData((Identifier.Identifier ""), TInt32))
+        let aliasData = defaultArg _aliasData (AliasData((Identifier.Identifier ("", "")), TInt32))
         let fnData = defaultArg _fnData (FnData(TBad, List<TypeVariant * Identifier>()))
         let context = defaultArg _context ""
 

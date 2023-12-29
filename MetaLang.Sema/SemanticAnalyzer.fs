@@ -25,7 +25,10 @@ module SemaDefinition =
 
         member val Trace = semaTrace with get
         
-        member private this.toTypeVariant (token: Token): TypeVariant =
+        member private this.throwError what line pos : unit =
+            this.Results.Errors.Add (Error(what, line, pos))
+
+        member private this.ToTypeVariant (token: Token): TypeVariant =
 
             match token.LiteralType with
                 | LiteralVariant.Integer8 -> TInt8
@@ -35,12 +38,34 @@ module SemaDefinition =
                 | LiteralVariant.Float -> TDouble
                 | _ -> TBad
 
+        member private this.ToTypeVariant (identifier: Identifier): TypeVariant =
+
+            match identifier with
+            | Identifier.Identifier (text, scope) ->
+
+                let symbolTable = this.SymbolTables.[scope]
+
+                match symbolTable.Exist(identifier) with
+                | true ->
+
+                    let symbol = symbolTable.Get identifier
+
+                    match symbol.Type with
+                    | Variable ->
+                        symbol.TypeInfo
+
+                    | _ ->
+                        this.throwError $"The identifier {text} is not variable" 0 0
+                        TBad
+                
+                | false ->
+                    this.throwError $"The identifier {text} don`t exist in current context" 0 0
+                    TBad
+
+
         member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant): unit =
 
             let excepted = defaultArg _excepted TAny
-
-            let inline throwError(what, line, pos): unit =
-                this.Results.Errors.Add (Error(what, line, pos))
 
             let inline toNumberType(typeOf): TypeVariant =
                 match typeOf with
@@ -58,6 +83,12 @@ module SemaDefinition =
 
             | Expression.Identifier x ->
 
+                match x with
+                | Identifier.Identifier (text, scope) ->
+
+
+
+                    ()
                 
                 ()
 
@@ -74,7 +105,7 @@ module SemaDefinition =
                 | Literal.StringLiteral x -> typeOfLiteral <- TString
                 | Literal.NumberLiteral (token) ->
                 
-                    typeOfLiteral <- this.toTypeVariant(token)
+                    typeOfLiteral <- this.ToTypeVariant(token)
 
                     pos <- token.Pos
                     line <- token.Line
@@ -84,12 +115,26 @@ module SemaDefinition =
 
                 if not(typeOfLiteral = excepted) || typeOfLiteral = TAny
                 then 
-                    throwError ($"Type incompatibility. The type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexemeOfLiteral}  ", line, pos)
+                    this.throwError $"Type incompatibility. The type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexemeOfLiteral}  " line pos
 
-            | Expression.BinaryExpression (BinaryExpression (token, _, expr)) -> 
+            | Expression.BinaryExpression (BinaryExpression (primary, _, expr)) -> 
             
-                this.TypeCheckExpression(expr, this.toTypeVariant(token))
-                ()
+                match primary with
+
+                | Primary.Primary (literal) ->
+
+                    match literal with
+                    | Literal.NumberLiteral (token) ->
+                        this.TypeCheckExpression(expr, this.ToTypeVariant(token))
+
+                    | _ ->
+                        ()
+                
+                | Primary.PrimaryIdentifier (identifier) ->
+                    this.ToTypeVariant(identifier) |> ignore
+
+                | _ ->
+                    ()
 
             | _ -> ()
 

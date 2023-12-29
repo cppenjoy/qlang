@@ -22,7 +22,7 @@ module AST =
         abstract member Visit: EmptyNode -> unit
 
     and Identifier =
-        | Identifier of string
+        | Identifier of string * string // Text * Context(In Symbol Table)
 
     and Literal =
         | StringLiteral of string
@@ -64,7 +64,12 @@ module AST =
                 ()
 
     and BinaryExpression =
-        | BinaryExpression of Token * Token * Expression
+        | BinaryExpression of Primary * Token * Expression
+
+    and Primary =
+        | Primary of Literal
+        | PrimaryIdentifier of Identifier
+        | EmptyNode of unit
 
     and AssignStmt = 
         | AssignStmt of Identifier * Expression

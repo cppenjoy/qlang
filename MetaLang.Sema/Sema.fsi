@@ -21,13 +21,20 @@ namespace MetaLang.Sema
                  ?_semaTrace: bool -> SemaAnalyzer
             
             member
+              private ToTypeVariant: identifier: Parser.AST.Identifier ->
+                                       Parser.TypeDefinition.TypeVariant
+            
+            member
+              private ToTypeVariant: token: Parser.Lexer.TokenDefinition.Token ->
+                                       Parser.TypeDefinition.TypeVariant
+            
+            member
               private TypeCheckExpression: expression: Parser.AST.Expression *
                                            ?_excepted: Parser.TypeDefinition.TypeVariant ->
                                              unit
             
             member
-              private toTypeVariant: token: Parser.Lexer.TokenDefinition.Token ->
-                                       Parser.TypeDefinition.TypeVariant
+              private throwError: what: string -> line: int -> pos: int -> unit
             
             member Results: SemaResults
             

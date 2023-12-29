@@ -146,7 +146,7 @@ namespace MetaLang.Parser
             
             abstract Visit: AssignStmt -> unit
         
-        and Identifier = | Identifier of string
+        and Identifier = | Identifier of string * string
         
         and Literal =
             | StringLiteral of string
@@ -174,8 +174,12 @@ namespace MetaLang.Parser
         
         and BinaryExpression =
             | BinaryExpression of
-              Lexer.TokenDefinition.Token * Lexer.TokenDefinition.Token *
-              Expression
+              Primary * Lexer.TokenDefinition.Token * Expression
+        
+        and Primary =
+            | Primary of Literal
+            | PrimaryIdentifier of Identifier
+            | EmptyNode of unit
         
         and AssignStmt =
             | AssignStmt of Identifier * Expression

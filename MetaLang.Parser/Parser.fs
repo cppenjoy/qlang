@@ -69,11 +69,16 @@ module ParserDefinition =
 
             let getMirrorType(src: string): string =
 
-                let lev: Levenshtein = new Levenshtein("int8")
+                let mutable map = Dictionary<string, int>()
+                let lev = new Levenshtein("int8")
 
-                //for item in ["int16"; "int32"; "int64"] do
-                  //  let result: int = lev.DistanceFrom item
+                for item in ["int16"; "int32"; "int64"] do
+                    let result: int = lev.DistanceFrom item
 
+                    map.Add (item, result)
+
+                
+                
                 ""
 
             let lookback() =
@@ -101,7 +106,7 @@ module ParserDefinition =
             let inline isType(token: Token): bool =
                 match token.Type with
                 | KeywordString | KeywordBool | KeywordArray | KeywordInt8 | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
-                | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme)) -> true
+                | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme, "")) -> true
                 | _ -> false
 
             let inline throwError(what: string): Token =
@@ -117,13 +122,30 @@ module ParserDefinition =
 
                 pos <- pos - 1
 
-                let firstExpression: Token = parseNumber()
+                let firstExpression = parsePrimary()
                 next() |> ignore
                 let secondExpression: Expression = parseExpression()
 
                 let Node = BinaryExpression(firstExpression, this.Tokens.[pos - 1], secondExpression)
 
                 Expression.BinaryExpression Node
+
+            and parsePrimary(): Primary =
+
+                report "parsing primary....."
+
+                let primary: Token = next()
+
+                match primary.Type with
+                | TokenType.NumberLiteral ->
+                    Primary.Primary (Literal.NumberLiteral primary)
+                
+                | TokenType.Identifier ->                     
+                    Primary.PrimaryIdentifier (Identifier.Identifier (primary.Lexeme, currentScope))
+
+                | _ -> 
+                    throwError $"You cannot use NaN in binary expressions. Ref: {primary.Type.ToString()}" |> ignore
+                    Primary.EmptyNode ()
 
             and parseNumber(): Token =
 
@@ -152,11 +174,11 @@ module ParserDefinition =
                 | KeywordBool -> TBool
                 | _ ->
 
-                    let existOrNot = (getScope "global").Exist (Identifier.Identifier(primary.Lexeme))
+                    let existOrNot = (getScope "global").Exist (Identifier.Identifier(primary.Lexeme, ""))
 
                     match existOrNot with
                     | true ->
-                        let typeof = (getScope "global").Get (Identifier.Identifier(primary.Lexeme))
+                        let typeof = (getScope "global").Get (Identifier.Identifier(primary.Lexeme, ""))
 
                         typeof.Alias.TypeOfElem
 
@@ -173,13 +195,13 @@ module ParserDefinition =
                 match primary.Type with
                 | TokenType.Identifier -> 
                 
-                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme)
+                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme, currentScope)
 
                     identifier
 
                 | _ -> 
                     throwError $"Unrecognized identifier\n Note: unrecognized identifier\n\t| {lookback().Lexeme} {primary.Lexeme} <- this is a bad identifier" |> ignore
-                    Identifier.Identifier("")
+                    Identifier.Identifier("", "")
 
             and parseExpression(): Expression =
 
@@ -210,9 +232,17 @@ module ParserDefinition =
 
                 | TokenType.Identifier -> 
                 
-                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme)
+                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme, "")
 
-                    Expression.Identifier(identifier)
+                    match next().Type with
+                    | Operator ->
+
+                        pos <- pos - 1
+                        parseBinaryExpression()
+
+                    | _ ->
+                        pos <- pos - 2
+                        Expression.Identifier(identifier)
                 
                 | TokenType.StringLiteral -> 
 
