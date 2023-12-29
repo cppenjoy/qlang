@@ -1,8 +1,10 @@
-```ocaml
+```fs
 type Def =
 
-    // Field declaration
+    // public field declaration
     let someField = 0
+    // private field Declaration
+    let private m_someField = 0
 
     // Constructor declaration. Behaviour as a basic function
     ctor Def(int value) -> this.someField = value

@@ -1,0 +1,5 @@
+
+namespace tags
+{
+    type ["Integer"];
+}
