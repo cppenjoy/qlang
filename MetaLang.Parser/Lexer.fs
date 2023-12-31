@@ -37,6 +37,8 @@ module TokenDefinition =
         | KeywordFloat // float
         | KeywordDouble // double
 
+        | PP_KeywordInclude // include
+
         | KeywordArray // array
         | KeywordStatic // static
         | KeywordBool // bool
@@ -82,6 +84,8 @@ module TokenDefinition =
 
             ("float", TokenType.KeywordFloat);
             ("double", TokenType.KeywordDouble);
+
+            ("#include", TokenType.PP_KeywordInclude);
 
             ("bool", TokenType.KeywordBool);
             ("static", TokenType.KeywordStatic);
@@ -154,10 +158,9 @@ module LexerDefinition =
             then
                 results.Errors.Add( Error("incomplete string literal", line, inlinePos) )
             else 
+                let value: string = this.Source.Substring(offset + 1, pos - offset)
+
                 this.next() |> ignore
-
-                let value: string = this.Source.Substring(offset, pos - offset)
-
                 results.Tokens.Add(Token(TokenType.StringLiteral, value, line, inlinePos))
                 ()
 
@@ -165,7 +168,7 @@ module LexerDefinition =
 
             pos <- pos - 1
 
-            while ( Char.IsLetterOrDigit(this.peek(0)) && not(this.is_end(0)) ) do
+            while (this.peek(0) = '#' || Char.IsLetterOrDigit(this.peek(0)) && not(this.is_end(0)) ) do
                 this.next() |> ignore
 
             let value: string = this.Source.Substring(offset, pos - offset)
@@ -248,7 +251,6 @@ module LexerDefinition =
                     this.next() |> ignore
                     this.next() |> ignore
                     
-
                 | ',' -> pushToken(TokenType.Comma, ",")
 
                 | '{' -> pushToken(TokenType.LBrace, "{")
@@ -276,7 +278,7 @@ module LexerDefinition =
                 | _ when Char.IsDigit(ch) -> this.tokenize_number(results)
                 | _ when IsIntegerPrefix(ch) && Char.IsDigit(this.next()) ->                
                     this.tokenize_number(results, ch)
-                | _ when Char.IsLetter(ch) -> this.tokenize_identifier(results)
+                | _ when Char.IsLetter(ch) || ch = '#' -> this.tokenize_identifier(results)
 
                 | _ -> ()
 

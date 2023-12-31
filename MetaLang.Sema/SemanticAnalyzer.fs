@@ -45,8 +45,8 @@ module SemaDefinition =
 
                 let symbolTable = this.SymbolTables.[scope]
 
-                match symbolTable.Exist(identifier) with
-                | true ->
+                match (symbolTable.Exist(identifier) || this.SymbolTables.["global"].Exist(Identifier.Identifier(text, "global")))  with
+                | true when symbolTable.Exist(identifier) ->
 
                     let symbol = symbolTable.Get identifier
 
@@ -57,8 +57,20 @@ module SemaDefinition =
                     | _ ->
                         this.throwError $"The identifier {text} is not variable" 0 0
                         TBad
+
+                | true when this.SymbolTables.["global"].Exist (Identifier.Identifier(text, "global")) ->
+
+                    let symbol = this.SymbolTables.["global"].Get (Identifier.Identifier(text, "global"))
+
+                    match symbol.Type with
+                    | Variable ->
+                        symbol.TypeInfo
+
+                    | _ ->
+                        this.throwError $"The identifier {text} is not variable" 0 0
+                        TBad
                 
-                | false ->
+                | _ ->
                     this.throwError $"The identifier {text} don`t exist in current context" 0 0
                     TBad
 
@@ -83,14 +95,14 @@ module SemaDefinition =
 
             | Expression.Identifier x ->
 
-                match x with
-                | Identifier.Identifier (text, scope) ->
-
-
-
-                    ()
                 
-                ()
+
+                let typeOfIdentifier = this.ToTypeVariant(x)
+
+                if not(typeOfIdentifier = excepted) || typeOfIdentifier = TAny
+                then 
+                    this.throwError $"Type incompatibility. The {typeOfIdentifier.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t|   " 0 0
+
 
             | Expression.Literal x ->
 
@@ -131,7 +143,7 @@ module SemaDefinition =
                         ()
                 
                 | Primary.PrimaryIdentifier (identifier) ->
-                    this.ToTypeVariant(identifier) |> ignore
+                    this.TypeCheckExpression(expr, this.ToTypeVariant(identifier))
 
                 | _ ->
                     ()

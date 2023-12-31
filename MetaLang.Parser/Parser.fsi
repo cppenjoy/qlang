@@ -46,6 +46,7 @@ namespace MetaLang.Parser.Lexer
             | KeywordInt64
             | KeywordFloat
             | KeywordDouble
+            | PP_KeywordInclude
             | KeywordArray
             | KeywordStatic
             | KeywordBool

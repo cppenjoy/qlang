@@ -1,12 +1,17 @@
+#nowarn "67"
+
 namespace MetaLang.Parser
 
 open System
+open System.IO
 open System.Text
 open System.Collections.Generic
-open Fastenshtein
 open MetaLang.Parser.Lexer
 open MetaLang.Parser.SymbolTable
 open MetaLang.ErrorHandling
+open MetaLang.Parser.Lexer
+open MetaLang.Parser.SymbolTable
+open Fastenshtein
 open TokenDefinition
 open SymbolDefinition
 open LexerDefinition
@@ -27,7 +32,7 @@ module ParserDefinition =
 
     type Parser(_tokens: List<Token>) =
 
-        member val Tokens: List<Token> = _tokens with get
+        member val Tokens: List<Token> = _tokens with get, set
 
         member this.Parse(?trace: bool): ParserResults =
 
@@ -40,7 +45,9 @@ module ParserDefinition =
             let mutable latestScope = Stack<string>()
 
             let pushScope identifier =
-                latestScope.Push currentScope
+                if latestScope.Count >= 0  then
+                    latestScope.Push currentScope
+
                 currentScope <- identifier
 
                 parserResults.SymbolTables.Add(identifier, new SymbolTable())
@@ -232,7 +239,7 @@ module ParserDefinition =
 
                 | TokenType.Identifier -> 
                 
-                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme, "")
+                    let identifier: Identifier = Identifier.Identifier(primary.Lexeme, currentScope)
 
                     match next().Type with
                     | Operator ->
@@ -241,7 +248,7 @@ module ParserDefinition =
                         parseBinaryExpression()
 
                     | _ ->
-                        pos <- pos - 2
+                        pos <- pos - 1
                         Expression.Identifier(identifier)
                 
                 | TokenType.StringLiteral -> 
@@ -381,6 +388,34 @@ module ParserDefinition =
                 let expression: Expression = parseExpression()
 
                 PrintStmt.PrintStmt(expression)
+
+            let parsePPInclude(): IVisitable =
+
+                report "including some shit......"
+
+                let path =
+
+                    match next().Type with
+                    | TokenType.StringLiteral -> this.Tokens[pos - 1]
+                    | _ ->
+                        throwError "Bad literal"
+
+                let mutable source: string = ""
+
+                try 
+                    source <- File.ReadAllText path.Lexeme
+                with
+                | :? Exception as (excep: Exception) ->
+                    throwError "File Not Found" |> ignore
+
+                // Tokenizing include text
+                let lexer: Lexer = Lexer(source)
+                let lexerResult: LexerResults = lexer.Tokenize()
+
+                this.Tokens.InsertRange(0, lexerResult.Tokens)
+                parserResults.Errors.AddRange(lexerResult.Errors)
+
+                EmptyNode()
 
             let rec parseFnDeclStmt(): IVisitable =
 
@@ -543,6 +578,7 @@ module ParserDefinition =
                     EmptyNode ()
 
                 | KeywordLet -> parseVarDeclStmt()
+                | PP_KeywordInclude -> parsePPInclude()
                 | KeywordFn -> parseFnDeclStmt()
                 | KeywordUsing -> parseUsingDeclStmt()
                 | KeywordReturn -> parseReturnStmt()

@@ -12,9 +12,9 @@
     <Compile Include="Parser.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MetaLang.ErrorHandling\MetaLang.ErrorHandling.fsproj" />
+    <PackageReference Include="Fastenshtein" Version="1.0.0.8" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fastenshtein" Version="1.0.0.8" />
+    <ProjectReference Include="..\MetaLang.ErrorHandling\MetaLang.ErrorHandling.fsproj" />
   </ItemGroup>
 </Project>
