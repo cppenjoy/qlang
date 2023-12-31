@@ -1,5 +1,5 @@
 
 namespace tags
 {
-    type ["Integer"];
+    type ["Integer"]
 }

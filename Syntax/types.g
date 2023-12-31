@@ -10,6 +10,9 @@ number-type ->
     | 'double'
 
 type -> 
+    | 'auto'
+    | identifier
+    | 'array' 'of' type
     | 'int8'
     | 'int16'
     | 'int32'

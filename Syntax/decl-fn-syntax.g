@@ -1,6 +1,9 @@
 # decl-fn
 
-decl-fn -> 'fn' identifier fn-param-decl type? fn-body
+decl-fn -> 'fn' generic? identifier fn-param-decl type? fn-body
+
+generic -> '<' identifier (',' identifier)* '>'
+
 oneline-fn -> 'fn' identifier fn-param-decl type? '->' fn-short-body
 forward-decl-fn -> 'extern' 'fn' identifier fn-param-decl type? ';'?
 
