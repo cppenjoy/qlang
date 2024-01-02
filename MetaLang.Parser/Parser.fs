@@ -4,6 +4,7 @@ namespace MetaLang.Parser
 
 open System
 open System.IO
+open System.Linq
 open System.Text
 open System.Collections.Generic
 open MetaLang.Parser.Lexer
@@ -41,10 +42,20 @@ module ParserDefinition =
             let parserResults: ParserResults = ParserResults()
             let mutable pos = 0
 
+            let inline lookback() =
+                    this.Tokens.[pos - 2]
+
+            let inline throwError(what: string): Token =
+                parserResults.Errors.Add ( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos) )
+                Token(TokenType.Error, "")
+
+            let inline throwWarning(what: string): unit =
+                parserResults.Errors.Add( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos, ErrorLevel.Warning) )
+
             let mutable currentScope = ""
             let mutable latestScope = Stack<string>()
 
-            let pushScope identifier =
+            let inline pushScope identifier =
                 if latestScope.Count >= 0  then
                     latestScope.Push currentScope
 
@@ -52,10 +63,14 @@ module ParserDefinition =
 
                 parserResults.SymbolTables.Add(identifier, new SymbolTable())
 
-            let recoveryScope () =
-                currentScope <- latestScope.Pop()
+            let inline recoveryScope () =
+                if latestScope.Count > 1 then
+                    currentScope <- latestScope.Pop()
+                else
+                    throwError "You tried to close the scope without opening it" |> ignore
+                    
 
-            let getScope identifier =
+            let inline getScope identifier =
                 parserResults.SymbolTables.[identifier]
 
             let generateScopeIdentifier (signature: string) length =
@@ -74,22 +89,32 @@ module ParserDefinition =
 
             pushScope "global"            
 
-            let getMirrorType(src: string): string =
+            let levenshteinDistance (word1: string) (word2: string) =
+                let m, n = word1.Length, word2.Length
+                let dp = Array2D.create (m + 1) (n + 1) 0
 
-                let mutable map = Dictionary<string, int>()
-                let lev = new Levenshtein("int8")
+                for i in 0..m do
+                    dp.[i, 0] <- i
 
-                for item in ["int16"; "int32"; "int64"] do
-                    let result: int = lev.DistanceFrom item
+                for j in 0..n do
+                    dp.[0, j] <- j
 
-                    map.Add (item, result)
+                for i in 1..m do
+                    for j in 1..n do
+                        let cost = if word1.[i - 1] = word2.[j - 1] then 0 else 1
+                        dp.[i, j] <- List.min [ dp.[i - 1, j] + 1; dp.[i, j - 1] + 1; dp.[i - 1, j - 1] + cost ]
 
-                
-                
-                ""
+                dp.[m, n]
 
-            let lookback() =
-                    this.Tokens.[pos - 2]
+            let findMostSimilarWord (word: string) (words: string[]) =
+                words
+                |> Array.map (fun w -> (w, levenshteinDistance word w))
+                |> Array.sortBy (fun (_, distance) -> distance)
+                |> Array.head
+                |> fst
+
+            let inline getMirrorType typeof =
+                findMostSimilarWord typeof [|"char"; "float"; "double"; "string"; "int8"; "int16"; "int32"; "int64"|]
 
             let next(): Token =
 
@@ -115,13 +140,6 @@ module ParserDefinition =
                 | KeywordString | KeywordBool | KeywordArray | KeywordInt8 | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
                 | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme, "")) -> true
                 | _ -> false
-
-            let inline throwError(what: string): Token =
-                parserResults.Errors.Add ( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos) )
-                Token(TokenType.Error, "")
-
-            let inline throwWarning(what: string): unit =
-                parserResults.Errors.Add( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos, ErrorLevel.Warning) )
 
             let rec parseBinaryExpression(): Expression =
 
@@ -190,7 +208,7 @@ module ParserDefinition =
                         typeof.Alias.TypeOfElem
 
                     | _ ->
-                        throwError $"The type {primary.Lexeme} is undefined, did you man {getMirrorType primary.Lexeme}" |> ignore
+                        throwError $"The type {primary.Lexeme} is undefined, did you man {getMirrorType primary.Lexeme}\n Note: This type caused was not recognized\n\t{primary.Line} | {this.Tokens.[pos - 4].Lexeme} {this.Tokens.[pos - 3].Lexeme} {lookback().Lexeme} {primary.Lexeme} <- {getMirrorType primary.Lexeme}?" |> ignore
                         TInt32
 
             and parseIdentifier(): Identifier =
@@ -207,7 +225,7 @@ module ParserDefinition =
                     identifier
 
                 | _ -> 
-                    throwError $"Unrecognized identifier\n Note: unrecognized identifier\n\t| {lookback().Lexeme} {primary.Lexeme} <- this is a bad identifier" |> ignore
+                    throwError $"Unrecognized identifier. An identifier can only contain letters, _ and digit (after the letter)\n Note: This identifier caused was not recognized\n\t{primary.Line} | {lookback().Lexeme} {primary.Lexeme} <- this is a bad identifier" |> ignore
                     Identifier.Identifier("", "")
 
             and parseExpression(): Expression =
@@ -408,12 +426,17 @@ module ParserDefinition =
                 | :? Exception as (excep: Exception) ->
                     throwError "File Not Found" |> ignore
 
+                this.Tokens[pos - 1] <- Token(Empty, "")
+
                 // Tokenizing include text
                 let lexer: Lexer = Lexer(source)
                 let lexerResult: LexerResults = lexer.Tokenize()
 
                 this.Tokens.InsertRange(0, lexerResult.Tokens)
                 parserResults.Errors.AddRange(lexerResult.Errors)
+
+                pos <- pos - 2
+                printfn "%s" (this.Tokens[pos].Type.ToString())
 
                 EmptyNode()
 
@@ -578,7 +601,10 @@ module ParserDefinition =
                     EmptyNode ()
 
                 | KeywordLet -> parseVarDeclStmt()
-                | PP_KeywordInclude -> parsePPInclude()
+                | PP_KeywordInclude ->
+                    this.Tokens.[pos - 1] <- Token(TokenType.Empty, "")
+                    parsePPInclude()
+
                 | KeywordFn -> parseFnDeclStmt()
                 | KeywordUsing -> parseUsingDeclStmt()
                 | KeywordReturn -> parseReturnStmt()
@@ -586,6 +612,9 @@ module ParserDefinition =
                     pos <- pos - 1
                     parseAssignExpression()
                 
+                | Empty ->
+                    EmptyNode()
+
                 | _ -> 
                     throwError $"The keyword or identifier {this.Tokens.[pos - 1].Lexeme} is undefined" |> ignore
                     EmptyNode ()

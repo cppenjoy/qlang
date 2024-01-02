@@ -1,6 +1,6 @@
 
 
-
+namespace FSharp
 
 namespace MetaLang.Parser
     
@@ -55,6 +55,7 @@ namespace MetaLang.Parser.Lexer
             | KeywordUsing
             | KeywordReturn
             | Error
+            | Empty
             | EOF
         
         [<Struct>]
@@ -85,7 +86,7 @@ namespace MetaLang.Parser.Lexer
     
     module LexerDefinition =
         
-        type Error = ErrorHandling.Error
+        type Error = MetaLang.ErrorHandling.Error
         
         type LexerResults =
             
@@ -127,7 +128,7 @@ namespace MetaLang.Parser
             
             abstract Accept: IVisitor -> unit
         
-        and IVisitor =
+        and [<Interface>] IVisitor =
             
             abstract Visit: EmptyNode -> unit
             
@@ -236,33 +237,35 @@ namespace MetaLang.Parser.SymbolTable
             
             member Elements: System.Collections.Generic.List<Symbol>
             
-            member TypeOfElem: TypeDefinition.TypeVariant
+            member TypeOfElem: MetaLang.Parser.TypeDefinition.TypeVariant
         
-        and AliasData =
+        and [<Class>] AliasData =
             
-            new: identifier: AST.Identifier *
-                 ?typeVar: TypeDefinition.TypeVariant -> AliasData
+            new: identifier: MetaLang.Parser.AST.Identifier *
+                 ?typeVar: MetaLang.Parser.TypeDefinition.TypeVariant ->
+                   AliasData
             
-            member Identifier: AST.Identifier
+            member Identifier: MetaLang.Parser.AST.Identifier
             
-            member TypeOfElem: TypeDefinition.TypeVariant
+            member TypeOfElem: MetaLang.Parser.TypeDefinition.TypeVariant
         
-        and FnData =
+        and [<Class>] FnData =
             
-            new: typeofReturn: TypeDefinition.TypeVariant *
-                 signature: System.Collections.Generic.List<TypeDefinition.TypeVariant *
-                                                            AST.Identifier> ->
+            new: typeofReturn: MetaLang.Parser.TypeDefinition.TypeVariant *
+                 signature: System.Collections.Generic.List<MetaLang.Parser.TypeDefinition.TypeVariant *
+                                                            MetaLang.Parser.AST.Identifier> ->
                    FnData
             
             member
-              Signature: System.Collections.Generic.List<TypeDefinition.TypeVariant *
-                                                         AST.Identifier>
+              Signature: System.Collections.Generic.List<MetaLang.Parser.TypeDefinition.TypeVariant *
+                                                         MetaLang.Parser.AST.Identifier>
             
-            member TypeofReturn: TypeDefinition.TypeVariant
+            member TypeofReturn: MetaLang.Parser.TypeDefinition.TypeVariant
         
-        and Symbol =
+        and [<Class>] Symbol =
             
-            new: _type: SymbolType * _info: TypeDefinition.TypeVariant *
+            new: _type: SymbolType *
+                 _info: MetaLang.Parser.TypeDefinition.TypeVariant *
                  _decl: uint32 * ?_context: string * ?_arrayElem: ArrayElements *
                  ?_aliasData: AliasData * ?_fnData: FnData -> Symbol
             
@@ -272,14 +275,15 @@ namespace MetaLang.Parser.SymbolTable
             
             member Context: string
             
-            member IsAlias: bool
+            member IsAlias: bool with get, set
             
             member LineOfDeclaration: uint32
             
             member Type: SymbolType
             
-            member TypeInfo: TypeDefinition.TypeVariant
+            member TypeInfo: MetaLang.Parser.TypeDefinition.TypeVariant
     
+    [<AutoOpen>]
     module SymbolTable =
         
         /// <summary>
@@ -289,26 +293,29 @@ namespace MetaLang.Parser.SymbolTable
             
             new: unit -> SymbolTable
             
-            member Exist: identifier: AST.Identifier -> bool
+            member Exist: identifier: MetaLang.Parser.AST.Identifier -> bool
             
             member Exist: symbol: SymbolDefinition.Symbol -> bool
             
-            member ExistAlias: identifier: AST.Identifier -> bool
-            
-            member Get: identifier: AST.Identifier -> SymbolDefinition.Symbol
+            member
+              ExistAlias: identifier: MetaLang.Parser.AST.Identifier -> bool
             
             member
-              GetIfExist: identifier: AST.Identifier ->
+              Get: identifier: MetaLang.Parser.AST.Identifier ->
+                     SymbolDefinition.Symbol
+            
+            member
+              GetIfExist: identifier: MetaLang.Parser.AST.Identifier ->
                             bool * SymbolDefinition.Symbol
             
             member
-              PushAlias: identifier: AST.Identifier ->
-                           refType: TypeDefinition.TypeVariant ->
+              PushAlias: identifier: MetaLang.Parser.AST.Identifier ->
+                           refType: MetaLang.Parser.TypeDefinition.TypeVariant ->
                            line: int -> unit
             
             member
               PushFunction: scope: string ->
-                              identifier: AST.Identifier ->
+                              identifier: MetaLang.Parser.AST.Identifier ->
                               line: int ->
                               fnData: SymbolDefinition.FnData -> unit
             
@@ -316,8 +323,8 @@ namespace MetaLang.Parser.SymbolTable
             
             member
               PushVariable: scope: string ->
-                              identifier: AST.Identifier ->
-                              typeofVariable: TypeDefinition.TypeVariant ->
+                              identifier: MetaLang.Parser.AST.Identifier ->
+                              typeofVariable: MetaLang.Parser.TypeDefinition.TypeVariant ->
                               line: int -> unit
             
             member
@@ -351,5 +358,5 @@ namespace MetaLang.Parser
             member Parse: ?trace: bool -> ParserResults
             
             member
-              Tokens: System.Collections.Generic.List<Lexer.TokenDefinition.Token>
+              Tokens: System.Collections.Generic.List<Lexer.TokenDefinition.Token> with get, set
 

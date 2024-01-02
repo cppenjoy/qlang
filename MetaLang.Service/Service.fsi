@@ -1,11 +1,11 @@
 
 
-
+namespace FSharp
 
 namespace MetaLang.Service
     
     type AstPrinter =
-        interface Parser.AST.IVisitor
+        interface MetaLang.Parser.AST.IVisitor
         
         new: unit -> AstPrinter
 
@@ -36,7 +36,8 @@ namespace MetaLang.Service
             
             member ThrowAllErrors: unit -> unit
             
-            member Errors: System.Collections.Generic.List<ErrorHandling.Error>
+            member
+              Errors: System.Collections.Generic.List<MetaLang.ErrorHandling.Error>
             
             member Name: string
             
@@ -53,11 +54,11 @@ namespace MetaLang.Service
             new: ?_lexerTrace: bool * ?_parserTrace: bool * ?_semaTrace: bool ->
                    CompilerOptions
             
-            member LexerTrace: bool
+            member LexerTrace: bool with get, set
             
-            member ParserTrace: bool
+            member ParserTrace: bool with get, set
             
-            member SemaTrace: bool
+            member SemaTrace: bool with get, set
         
         type CompilerInstance =
             
@@ -66,7 +67,7 @@ namespace MetaLang.Service
             member CompileAllModules: unit -> unit
             
             member
-              Modules: System.Collections.Generic.List<ModuleDefinition.Module>
+              Modules: System.Collections.Generic.List<ModuleDefinition.Module> with get, set
             
-            member Options: CompilerOptions
+            member Options: CompilerOptions with get, set
 

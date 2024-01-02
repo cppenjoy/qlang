@@ -1,6 +1,6 @@
 
 
-
+namespace FSharp
 
 namespace MetaLang.Sema
     
@@ -11,26 +11,26 @@ namespace MetaLang.Sema
             new: unit -> SemaResults
             
             member
-              Errors: System.Collections.Generic.List<Parser.Lexer.LexerDefinition.Error>
+              Errors: System.Collections.Generic.List<MetaLang.Parser.Lexer.LexerDefinition.Error>
         
         type SemaAnalyzer =
-            interface Parser.AST.IVisitor
+            interface MetaLang.Parser.AST.IVisitor
             
             new: _symbolTables: System.Collections.Generic.Dictionary<string,
-                                                                      Parser.SymbolTable.SymbolTable.SymbolTable> *
+                                                                      MetaLang.Parser.SymbolTable.SymbolTable.SymbolTable> *
                  ?_semaTrace: bool -> SemaAnalyzer
             
             member
-              private ToTypeVariant: identifier: Parser.AST.Identifier ->
-                                       Parser.TypeDefinition.TypeVariant
+              private ToTypeVariant: identifier: MetaLang.Parser.AST.Identifier ->
+                                       MetaLang.Parser.TypeDefinition.TypeVariant
             
             member
-              private ToTypeVariant: token: Parser.Lexer.TokenDefinition.Token ->
-                                       Parser.TypeDefinition.TypeVariant
+              private ToTypeVariant: token: MetaLang.Parser.Lexer.TokenDefinition.Token ->
+                                       MetaLang.Parser.TypeDefinition.TypeVariant
             
             member
-              private TypeCheckExpression: expression: Parser.AST.Expression *
-                                           ?_excepted: Parser.TypeDefinition.TypeVariant ->
+              private TypeCheckExpression: expression: MetaLang.Parser.AST.Expression *
+                                           ?_excepted: MetaLang.Parser.TypeDefinition.TypeVariant ->
                                              unit
             
             member
@@ -40,7 +40,7 @@ namespace MetaLang.Sema
             
             member
               SymbolTables: System.Collections.Generic.Dictionary<string,
-                                                                  Parser.SymbolTable.SymbolTable.SymbolTable>
+                                                                  MetaLang.Parser.SymbolTable.SymbolTable.SymbolTable>
             
             member Trace: bool
 

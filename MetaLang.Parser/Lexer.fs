@@ -48,6 +48,7 @@ module TokenDefinition =
         | KeywordReturn // return
 
         | Error
+        | Empty
         | EOF
 
     type LiteralVariant =
@@ -158,7 +159,7 @@ module LexerDefinition =
             then
                 results.Errors.Add( Error("incomplete string literal", line, inlinePos) )
             else 
-                let value: string = this.Source.Substring(offset + 1, pos - offset)
+                let value: string = this.Source.Substring(offset + 1, pos - offset - 1)
 
                 this.next() |> ignore
                 results.Tokens.Add(Token(TokenType.StringLiteral, value, line, inlinePos))
