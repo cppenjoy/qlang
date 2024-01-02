@@ -1,5 +1,6 @@
 namespace MetaLang.Parser
 
+open FSharp.Json
 open System.Collections.Generic
 open MetaLang.Parser.Lexer
 open TokenDefinition

@@ -15,6 +15,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MetaLang.IR", "MetaLang.IR\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MetaLang.Sema", "MetaLang.Sema\MetaLang.Sema.fsproj", "{3FDEA530-4550-47CA-8574-2FC8F8688399}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Json", "FSharp.Json\FSharp.Json.fsproj", "{C2DB8845-8112-49E7-A332-1F571C9B6E2E}"
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,5 +114,17 @@ Global
 		{3FDEA530-4550-47CA-8574-2FC8F8688399}.Release|x64.Build.0 = Release|Any CPU
 		{3FDEA530-4550-47CA-8574-2FC8F8688399}.Release|x86.ActiveCfg = Release|Any CPU
 		{3FDEA530-4550-47CA-8574-2FC8F8688399}.Release|x86.Build.0 = Release|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Debug|x64.Build.0 = Debug|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Debug|x86.Build.0 = Debug|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Release|x64.ActiveCfg = Release|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Release|x64.Build.0 = Release|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Release|x86.ActiveCfg = Release|Any CPU
+		{C2DB8845-8112-49E7-A332-1F571C9B6E2E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

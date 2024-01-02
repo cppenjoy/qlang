@@ -49,15 +49,11 @@ namespace MetaLang.Service
     module CompilerDriverDefinition =
         
         type CompilerOptions =
-            
-            new: ?_lexerTrace: bool * ?_parserTrace: bool * ?_semaTrace: bool ->
-                   CompilerOptions
-            
-            member LexerTrace: bool
-            
-            member ParserTrace: bool
-            
-            member SemaTrace: bool
+            {
+              mutable LexerTrace: bool
+              mutable ParserTrace: bool
+              mutable DumpAst: bool
+            }
         
         type CompilerInstance =
             

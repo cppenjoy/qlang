@@ -14,5 +14,6 @@
     <ProjectReference Include="..\MetaLang.Parser\MetaLang.Parser.fsproj" />
     <ProjectReference Include="..\MetaLang.ErrorHandling\MetaLang.ErrorHandling.fsproj" />
     <ProjectReference Include="..\MetaLang.Sema\MetaLang.Sema.fsproj" />
+    <ProjectReference Include="..\FSharp.Json\FSharp.Json.fsproj" />
   </ItemGroup>
 </Project>

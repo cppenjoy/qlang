@@ -123,6 +123,7 @@ namespace MetaLang.Parser
     
     module AST =
         
+        [<FSharp.Json.JsonUnion>]
         type IVisitable =
             
             abstract Accept: IVisitor -> unit

@@ -2,6 +2,8 @@ namespace MetaLang.Service
 
 module CompilerDriverDefinition =
 
+    open System
+    open FSharp.Json
     open System.Collections.Generic
     open MetaLang.Parser
     open MetaLang.Sema
@@ -14,19 +16,11 @@ module CompilerDriverDefinition =
     open ModuleDefinition
     open AST
 
-    type CompilerOptions(?_lexerTrace: bool, ?_parserTrace: bool, ?_semaTrace: bool) = 
-
-        let lexerTrace: bool = defaultArg _lexerTrace false
-        let parserTrace: bool = defaultArg _parserTrace false
-        let semaTrace: bool = defaultArg _semaTrace false
-
-        member val LexerTrace: bool = lexerTrace with get, set
-        member val ParserTrace: bool = parserTrace with get, set
-        member val SemaTrace: bool = semaTrace with get, set
+    type CompilerOptions = { mutable LexerTrace: bool; mutable ParserTrace: bool; mutable DumpAst : bool }
 
     type CompilerInstance(?_options: CompilerOptions) =
         
-        let baseCompilerOptions: CompilerOptions = defaultArg _options (CompilerOptions())
+        let baseCompilerOptions: CompilerOptions = defaultArg _options { LexerTrace = false; ParserTrace = false; DumpAst = false } 
 
         member val Options: CompilerOptions = baseCompilerOptions with get, set
         member val Modules: List<Module> = List<Module>() with get, set
@@ -46,12 +40,11 @@ module CompilerDriverDefinition =
                 moduleInst.Errors.AddRange(lexerResult.Errors)
 
             // Lexer Trace
-                if this.Options.LexerTrace
-                    then
-                        printf "\n====Tokens from module %s====" moduleInst.Name
+                if this.Options.LexerTrace then
+                    printf "\n====Tokens from module %s====" moduleInst.Name
 
-                        for i in lexerResult.Tokens do
-                            printfn $"\nToken: [type {i.Type}, lexeme {i.Lexeme}, line {i.Line}, position {i.Pos}, literal-type {i.LiteralType}]"
+                    for i in lexerResult.Tokens do
+                        printfn $"\nToken: [type {i.Type}, lexeme {i.Lexeme}, line {i.Line}, position {i.Pos}, literal-type {i.LiteralType}]"
 
             // Parser
 
@@ -60,9 +53,14 @@ module CompilerDriverDefinition =
 
                 moduleInst.Errors.AddRange(parserResults.Errors)
 
+                if this.Options.DumpAst then
+                    let tree = List.ofSeq parserResults.Tree
+
+                    let jsonString = Json.serialize tree
+                    Console.WriteLine(jsonString);
+
             // Parser Trace
-                if this.Options.ParserTrace
-                then
+                if this.Options.ParserTrace then
                     let printVisitor: AstPrinter = AstPrinter()
 
                     for node in parserResults.Tree do
