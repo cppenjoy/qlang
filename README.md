@@ -1,4 +1,4 @@
-# MetaLang
+# MetaLang (Not Finished)
 
 `MetaLang` is a *high-level* programming language that focuses on *supercompilation*. 
 

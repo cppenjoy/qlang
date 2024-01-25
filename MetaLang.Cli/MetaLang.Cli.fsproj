@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>metalang</AssemblyName>
+    <AssemblyName>qlang</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <OtherFlags>--sig:Cli.fsi</OtherFlags>

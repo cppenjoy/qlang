@@ -74,7 +74,7 @@ let Main argv =
 
     if argv.Length = 0
     then
-        printfn "\nusage: metalang [-OPTIONS-] [-SOURCES-] ..."
+        printfn "\nusage: qlang [-OPTIONS-] [-SOURCES-] ..."
         printfn "  -h | --help - Displays all commands and their purpose"
         printfn "  -v | --version - Outputs the compiler version"
         printfn "  -lang | --language - Outputs the maximum supported version of MetaLang by this compiler"

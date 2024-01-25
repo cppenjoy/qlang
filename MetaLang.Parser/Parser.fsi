@@ -157,11 +157,16 @@ namespace MetaLang.Parser
         
         and Expression =
             | Expression of Expression
+            | CallExpression of CallExpression
             | CastExpression of CastExpression
             | BinaryExpression of BinaryExpression
             | Identifier of Identifier
             | Literal of Literal
             | EmptyNode of EmptyNode
+        
+        and CallExpression =
+            | CallExpression of
+              Identifier * System.Collections.Generic.List<Expression>
         
         and CastExpression =
             | CastExpression of TypeDefinition.TypeVariant * Identifier

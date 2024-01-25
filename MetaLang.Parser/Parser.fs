@@ -138,7 +138,8 @@ module ParserDefinition =
             let inline isType(token: Token): bool =
                 match token.Type with
                 | KeywordString | KeywordBool | KeywordArray | KeywordInt8 | KeywordInt16 | KeywordInt32 | KeywordInt64 | KeywordFloat | KeywordDouble -> true
-                | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme, "")) -> true
+                | _ when (getScope "global").ExistAlias(Identifier.Identifier(token.Lexeme, "global")) -> true
+                | _ when (getScope currentScope).ExistAlias(Identifier.Identifier(token.Lexeme, currentScope)) -> true
                 | _ -> false
 
             let rec parseBinaryExpression(): Expression =
@@ -150,6 +151,8 @@ module ParserDefinition =
                 let firstExpression = parsePrimary()
                 next() |> ignore
                 let secondExpression: Expression = parseExpression()
+
+
 
                 let Node = BinaryExpression(firstExpression, this.Tokens.[pos - 1], secondExpression)
 
@@ -191,25 +194,34 @@ module ParserDefinition =
                 let primary: Token = next()
 
                 match primary.Type with
+                | KeywordFloat -> TFloat
+                | KeywordDouble -> TDouble
                 | KeywordInt8 -> TInt8
                 | KeywordInt16 -> TInt16
                 | KeywordInt32 -> TInt32
                 | KeywordInt64 -> TInt64
                 | KeywordString -> TString
                 | KeywordBool -> TBool
+                    
                 | _ ->
 
-                    let existOrNot = (getScope "global").Exist (Identifier.Identifier(primary.Lexeme, ""))
+                    let existOrNot = (getScope "global").Exist (Identifier.Identifier(primary.Lexeme, "global"))
 
                     match existOrNot with
                     | true ->
-                        let typeof = (getScope "global").Get (Identifier.Identifier(primary.Lexeme, ""))
+                        let typeof = (getScope "global").Get (Identifier.Identifier(primary.Lexeme, "global"))
 
                         typeof.Alias.TypeOfElem
 
                     | _ ->
-                        throwError $"The type {primary.Lexeme} is undefined, did you man {getMirrorType primary.Lexeme}\n Note: This type caused was not recognized\n\t{primary.Line} | {this.Tokens.[pos - 4].Lexeme} {this.Tokens.[pos - 3].Lexeme} {lookback().Lexeme} {primary.Lexeme} <- {getMirrorType primary.Lexeme}?" |> ignore
-                        TInt32
+
+                        if (getScope currentScope).Exist (Identifier.Identifier(primary.Lexeme, currentScope)) then
+                            let typeof = (getScope currentScope).Get (Identifier.Identifier(primary.Lexeme, currentScope))
+                            typeof.Alias.TypeOfElem
+
+                        else
+                            throwError $"The type {primary.Lexeme} is undefined, did you man {getMirrorType primary.Lexeme}\n Note: This type caused was not recognized\n\t{primary.Line} | {this.Tokens.[pos - 4].Lexeme} {this.Tokens.[pos - 3].Lexeme} {lookback().Lexeme} {primary.Lexeme} <- {getMirrorType primary.Lexeme}?" |> ignore
+                            TInt32
 
             and parseIdentifier(): Identifier =
 
@@ -260,6 +272,12 @@ module ParserDefinition =
                     let identifier: Identifier = Identifier.Identifier(primary.Lexeme, currentScope)
 
                     match next().Type with
+                    //| LPair ->
+
+                      //  let argumentList = parseArgumentList()
+
+                        // Expression.
+
                     | Operator ->
 
                         pos <- pos - 1
@@ -314,13 +332,13 @@ module ParserDefinition =
 
                     let Type = parseType()
 
-                    match (getScope "global").Exist identifier with
+                    match (getScope currentScope).Exist identifier with
                     | true -> 
                         throwError $"The identifier {identifier} already defined {Type.ToString()}" |> ignore
                         EmptyNode()
 
                     | _ ->
-                        (getScope "global").PushAlias identifier Type primary.Line
+                        (getScope currentScope).PushAlias identifier Type primary.Line
                         UsingDeclStmt(identifier, Type)
 
                 | _ -> 
@@ -470,12 +488,17 @@ module ParserDefinition =
                                 parseParam()
 
                             | _ ->
-                                throwError $"something went wrong" |> ignore
+                                throwError $"Unfinished expression" |> ignore
                                 new List<TypeVariant * Identifier>()
 
 
                         | _ ->
-                            throwError $"something went wrong" |> ignore
+
+                            if this.Tokens.[pos - 1].Type = TokenType.RPair then
+                                throwError $"Missing void in function argument specifier" |> ignore
+                            else
+                                throwError $"The identifier {this.Tokens.[pos - 1].Lexeme} - not type" |> ignore
+
                             new List<TypeVariant * Identifier>()
 
 
@@ -554,7 +577,7 @@ module ParserDefinition =
                             EmptyNode()
 
                     | _ ->
-                        throwError "except type or fn body decl" |> ignore
+                        throwError "Except return type or function body" |> ignore
                         EmptyNode()
 
                 | _ ->

@@ -32,6 +32,8 @@ module AST =
     and Expression =
         | Expression of Expression
 
+        | CallExpression of CallExpression
+
         | CastExpression of CastExpression
         | BinaryExpression of BinaryExpression
 
@@ -39,6 +41,9 @@ module AST =
         | Literal of Literal
 
         | EmptyNode of EmptyNode
+
+    and CallExpression =
+        | CallExpression of Identifier * List<Expression>  // Parenthesis Argument List
 
     and CastExpression =
         | CastExpression of TypeVariant * Identifier

@@ -75,9 +75,10 @@ module SemaDefinition =
                     TBad
 
 
-        member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant): unit =
+        member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant, ?_primaryValue): unit =
 
             let excepted = defaultArg _excepted TAny
+            let primaryValue = defaultArg _primaryValue 0
 
             let inline toNumberType(typeOf): TypeVariant =
                 match typeOf with
@@ -94,9 +95,7 @@ module SemaDefinition =
                 (this :> IVisitor).Visit x
 
             | Expression.Identifier x ->
-
-                
-
+            
                 let typeOfIdentifier = this.ToTypeVariant(x)
 
                 if not(typeOfIdentifier = excepted) || typeOfIdentifier = TAny
@@ -125,7 +124,7 @@ module SemaDefinition =
 
                 | Literal.BooleanLiteral x -> typeOfLiteral <- TBool
 
-                if not(typeOfLiteral = excepted) || typeOfLiteral = TAny
+                if not(typeOfLiteral = excepted) && not (excepted = TAny)
                 then 
                     this.throwError $"Type incompatibility. The type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexemeOfLiteral}  " line pos
 
@@ -183,6 +182,7 @@ module SemaDefinition =
             member this.Visit(returnStmt: ReturnStmt): unit =
                 match returnStmt with
                 | ReturnStmt (expr) -> this.TypeCheckExpression(expr)
+                ()
                 ()
 
             member this.Visit(castExpression: CastExpression): unit =
