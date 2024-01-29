@@ -20,6 +20,8 @@ module SemaDefinition =
 
         let semaTrace = defaultArg _semaTrace false
 
+        let funcionCallStack: Stack<DeclFnStmt> = Stack()
+
         member val Results = SemaResults() with get
         member val SymbolTables: Dictionary<string, SymbolTable> = _symbolTables with get
 
@@ -75,10 +77,10 @@ module SemaDefinition =
                     TBad
 
 
-        member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant, ?_primaryValue): unit =
+        member private this.TypeCheckExpression(expression: Expression, ?_excepted: TypeVariant, ?_token: Token): unit =
 
             let excepted = defaultArg _excepted TAny
-            let primaryValue = defaultArg _primaryValue 0
+            let token = defaultArg _token (Token(TokenType.Empty, ""))
 
             let inline toNumberType(typeOf): TypeVariant =
                 match typeOf with
@@ -100,7 +102,7 @@ module SemaDefinition =
 
                 if not(typeOfIdentifier = excepted) || typeOfIdentifier = TAny
                 then 
-                    this.throwError $"Type incompatibility. The {typeOfIdentifier.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t|   " 0 0
+                    this.throwError $"Type incompatibility. The {typeOfIdentifier.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t|   " token.Line token.Pos
 
 
             | Expression.Literal x ->
@@ -126,7 +128,7 @@ module SemaDefinition =
 
                 if not(typeOfLiteral = excepted) && not (excepted = TAny)
                 then 
-                    this.throwError $"Type incompatibility. The type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexemeOfLiteral}  " line pos
+                    this.throwError $"Type incompatibility. The type {typeOfLiteral.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t| {lexemeOfLiteral}  " token.Line token.Pos
 
             | Expression.BinaryExpression (BinaryExpression (primary, _, expr)) -> 
             
@@ -180,15 +182,38 @@ module SemaDefinition =
                 ()
             
             member this.Visit(returnStmt: ReturnStmt): unit =
-                match returnStmt with
-                | ReturnStmt (expr) -> this.TypeCheckExpression(expr)
-                ()
-                ()
 
+                    match returnStmt with
+                    | ReturnStmt (token, expr) -> 
+                        
+                        match funcionCallStack.Count > 0 with
+                        | true ->
+
+                            match funcionCallStack.Pop() with
+                            | FnDeclNode (_, returnType, _, _) -> 
+                                this.TypeCheckExpression(expr, returnType, token)
+
+
+                        | _ ->
+                        this.throwError "the return statement is invalid at this point" token.Line token.Pos
+
+
+
+                
             member this.Visit(castExpression: CastExpression): unit =
                 
                 ()
 
             member this.Visit(declFnStmt: DeclFnStmt): unit =
-                
-                ()
+
+                funcionCallStack.Push declFnStmt
+
+                match declFnStmt with
+                    | FnDeclNode (_, _, _, body) -> 
+                        
+                        match body with
+                        | FnBody x ->
+
+                            for node in x do
+                                node.Accept this
+                () 

@@ -44,6 +44,9 @@ module ParserDefinition =
 
             let inline lookback() =
                     this.Tokens.[pos - 2]
+                    
+            let inline lookback2() =
+                    this.Tokens.[pos - 1]
 
             let inline throwError(what: string): Token =
                 parserResults.Errors.Add ( Error(what, this.Tokens.[pos - 1].Line, this.Tokens.[pos - 1].Pos) )
@@ -414,9 +417,10 @@ module ParserDefinition =
 
                 report "parsing return expression....."
 
+                let token = this.Tokens[pos - 1]
                 let expression: Expression = parseExpression()
 
-                PrintStmt.PrintStmt(expression)
+                ReturnStmt.ReturnStmt(token, expression)
 
             let parsePrintStmt(): IVisitable =
 
@@ -533,7 +537,7 @@ module ParserDefinition =
                             pushScope (generateScopeIdentifier $"{identifier.ToString()}" 9)
 
 
-                        let body = parseBody()
+                        let body = parseBody(returnType)
 
                         let fnBody = FnBody.FnBody(body)
                         let fnArgumentList = FnParamList.FnParamsNode(argumentList)
@@ -562,7 +566,7 @@ module ParserDefinition =
                                 pushScope (generateScopeIdentifier $"{identifier.ToString()}" 9)
 
 
-                            let body = parseBody()
+                            let body = parseBody(returnType)
 
                             let fnBody = FnBody.FnBody(body)
                             let fnArgumentList = FnParamList.FnParamsNode(argumentList)
@@ -584,17 +588,23 @@ module ParserDefinition =
                     throwError "unfinished declaration" |> ignore
                     EmptyNode()
 
-            and parseBody(): List<IVisitable> =
+            and parseBody(typeVariant: TypeVariant): List<IVisitable> =
 
                 report "parsing body....."
 
+                let mutable hasReturn = false
+ 
                 let result = List<IVisitable>()
 
                 let rec parseStmt () =
 
                     match next().Type with
                     | EOF | RBrace ->
-                        ()
+
+                        if not(hasReturn) && not(typeVariant = TypeVariant.TAny) then
+                            throwError $"There is no return statement. The function must return a value of type {typeVariant.ToString()}" |> ignore
+                        else
+                            ()
 
                     | _ -> 
 
@@ -602,9 +612,17 @@ module ParserDefinition =
 
                         let stmt: IVisitable = parseStatement()
                         
+                        
+                        match stmt with
+                        | :? ReturnStmt as stmt ->
+                            hasReturn <- true
+
+                        | _ -> ()
+
                         result.Add stmt
                         parseStmt()
 
+                parseStmt()
                 result
 
             and parseStatement() =

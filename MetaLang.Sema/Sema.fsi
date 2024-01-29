@@ -31,7 +31,8 @@ namespace MetaLang.Sema
             member
               private TypeCheckExpression: expression: MetaLang.Parser.AST.Expression *
                                            ?_excepted: MetaLang.Parser.TypeDefinition.TypeVariant *
-                                           ?_primaryValue: int -> unit
+                                           ?_token: MetaLang.Parser.Lexer.TokenDefinition.Token ->
+                                             unit
             
             member
               private throwError: what: string -> line: int -> pos: int -> unit

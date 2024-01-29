@@ -172,7 +172,7 @@ namespace MetaLang.Parser
             | CastExpression of TypeDefinition.TypeVariant * Identifier
         
         and ReturnStmt =
-            | ReturnStmt of Expression
+            | ReturnStmt of Lexer.TokenDefinition.Token * Expression
             interface IVisitable
         
         and UsingDeclStmt =

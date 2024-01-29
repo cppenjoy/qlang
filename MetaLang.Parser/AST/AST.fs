@@ -49,7 +49,7 @@ module AST =
         | CastExpression of TypeVariant * Identifier
 
     and ReturnStmt =
-        | ReturnStmt of Expression
+        | ReturnStmt of Token * Expression
 
         interface IVisitable with
 
