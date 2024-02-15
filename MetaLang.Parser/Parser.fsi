@@ -151,9 +151,9 @@ namespace MetaLang.Parser
         and Identifier = | Identifier of string * string
         
         and Literal =
-            | StringLiteral of string
+            | StringLiteral of Lexer.TokenDefinition.Token
             | NumberLiteral of Lexer.TokenDefinition.Token
-            | BooleanLiteral of bool
+            | BooleanLiteral of Lexer.TokenDefinition.Token
         
         and Expression =
             | Expression of Expression
@@ -212,7 +212,8 @@ namespace MetaLang.Parser
         
         and DeclFnStmt =
             | FnDeclNode of
-              Identifier * TypeDefinition.TypeVariant * FnParamDecl * FnBody
+              Identifier * TypeDefinition.TypeVariant * FnParamDecl * FnBody *
+              uint64 * uint64
             interface IVisitable
         
         and FnParamDecl =

@@ -115,7 +115,13 @@ module SemaDefinition =
 
                 match x with
 
-                | Literal.StringLiteral x -> typeOfLiteral <- TString
+                | Literal.StringLiteral (token) -> 
+                    pos <- token.Pos
+                    line <- token.Line
+                    lexemeOfLiteral <- token.Lexeme
+
+                    typeOfLiteral <- TString
+
                 | Literal.NumberLiteral (token) ->
                 
                     typeOfLiteral <- this.ToTypeVariant(token)
@@ -124,7 +130,12 @@ module SemaDefinition =
                     line <- token.Line
                     lexemeOfLiteral <- token.Lexeme
 
-                | Literal.BooleanLiteral x -> typeOfLiteral <- TBool
+                | Literal.BooleanLiteral (token) -> 
+                    pos <- token.Pos
+                    line <- token.Line
+                    lexemeOfLiteral <- token.Lexeme
+
+                    typeOfLiteral <- TBool
 
                 if not(typeOfLiteral = excepted) && not (excepted = TAny)
                 then 
@@ -190,7 +201,7 @@ module SemaDefinition =
                         | true ->
 
                             match funcionCallStack.Pop() with
-                            | FnDeclNode (_, returnType, _, _) -> 
+                            | FnDeclNode (_, returnType, _, _, _, _) -> 
                                 this.TypeCheckExpression(expr, returnType, token)
 
 
@@ -209,8 +220,14 @@ module SemaDefinition =
                 funcionCallStack.Push declFnStmt
 
                 match declFnStmt with
-                    | FnDeclNode (_, _, _, body) -> 
+                    | FnDeclNode (identifier, returnType, signature, body, line, pos) -> 
                         
+                        match identifier with
+                        | Identifier.Identifier (id, _) ->
+                            
+                            if id = "main" && not(returnType = TypeVariant.TInt32) then
+                                this.throwError "the main function should be return int32" (int line) (int pos) 
+                                 
                         match body with
                         | FnBody x ->
 

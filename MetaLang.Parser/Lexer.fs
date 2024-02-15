@@ -169,7 +169,7 @@ module LexerDefinition =
 
             pos <- pos - 1
 
-            while (this.peek(0) = '#' || Char.IsLetterOrDigit(this.peek(0)) && not(this.is_end(0)) ) do
+            while (this.peek(0) = '#' || this.peek(0) = '_' || Char.IsLetterOrDigit(this.peek(0)) && not(this.is_end(0)) ) do
                 this.next() |> ignore
 
             let value: string = this.Source.Substring(offset, pos - offset)
@@ -279,7 +279,7 @@ module LexerDefinition =
                 | _ when Char.IsDigit(ch) -> this.tokenize_number(results)
                 | _ when IsIntegerPrefix(ch) && Char.IsDigit(this.next()) ->                
                     this.tokenize_number(results, ch)
-                | _ when Char.IsLetter(ch) || ch = '#' -> this.tokenize_identifier(results)
+                | _ when Char.IsLetter(ch) || ch = '_' || ch = '#' -> this.tokenize_identifier(results)
 
                 | _ -> ()
 

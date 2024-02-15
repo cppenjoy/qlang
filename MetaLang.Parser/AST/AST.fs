@@ -25,9 +25,9 @@ module AST =
         | Identifier of string * string // Text * Context(In Symbol Table)
 
     and Literal =
-        | StringLiteral of string
+        | StringLiteral of Token
         | NumberLiteral of Token
-        | BooleanLiteral of bool
+        | BooleanLiteral of Token
 
     and Expression =
         | Expression of Expression
@@ -127,7 +127,7 @@ module AST =
                 ()
 
     and DeclFnStmt =
-        | FnDeclNode of Identifier * TypeVariant * FnParamDecl * FnBody
+        | FnDeclNode of Identifier * TypeVariant * FnParamDecl * FnBody * uint64 * uint64
 
         interface IVisitable with
 

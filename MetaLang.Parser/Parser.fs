@@ -274,12 +274,21 @@ module ParserDefinition =
                 
                     let identifier: Identifier = Identifier.Identifier(primary.Lexeme, currentScope)
 
+                    let parseArgumentExpressionList(): List<Expression> =
+
+                        let parsingResult = List<Expression>()
+
+                        
+
+                        parsingResult
+
+
                     match next().Type with
-                    //| LPair ->
+                    | LPair ->
 
-                      //  let argumentList = parseArgumentList()
+                        let argumentList = parseArgumentExpressionList()
 
-                        // Expression.
+                        Expression.CallExpression (CallExpression.CallExpression(identifier, argumentList))
 
                     | Operator ->
 
@@ -292,13 +301,13 @@ module ParserDefinition =
                 
                 | TokenType.StringLiteral -> 
 
-                    let literal: Literal = Literal.StringLiteral(primary.Lexeme)
+                    let literal: Literal = Literal.StringLiteral(primary)
 
                     Expression.Literal(literal)
 
                 | TokenType.BooleanLiteral -> 
 
-                    let literal: Literal = Literal.BooleanLiteral(bool.Parse(primary.Lexeme))
+                    let literal: Literal = Literal.BooleanLiteral(primary)
 
                     Expression.Literal(literal)
 
@@ -468,6 +477,8 @@ module ParserDefinition =
 
                 let identifier: Identifier = parseIdentifier()
 
+                let token_of_def = this.Tokens[pos];
+
                 let parseArgumentList(): List<TypeVariant * Identifier> =
 
                     let result = List<TypeVariant * Identifier>()
@@ -520,7 +531,7 @@ module ParserDefinition =
                     let argumentList = parseArgumentList()
                     let optionalCheck = next()
 
-                    let mutable returnType = TInt32
+                    let mutable returnType = TAny
 
                     match optionalCheck.Type with
                     | LBrace ->
@@ -542,7 +553,7 @@ module ParserDefinition =
                         let fnBody = FnBody.FnBody(body)
                         let fnArgumentList = FnParamList.FnParamsNode(argumentList)
                         let fnParams = FnParamDecl.ParamListNode(fnArgumentList)
-                        let fnNode = DeclFnStmt.FnDeclNode(identifier, returnType, fnParams, fnBody) 
+                        let fnNode = DeclFnStmt.FnDeclNode(identifier, returnType, fnParams, fnBody, (uint64 token_of_def.Line), (uint64 token_of_def.Pos)) 
                            
                         fnNode
 
@@ -571,7 +582,7 @@ module ParserDefinition =
                             let fnBody = FnBody.FnBody(body)
                             let fnArgumentList = FnParamList.FnParamsNode(argumentList)
                             let fnParams = FnParamDecl.ParamListNode(fnArgumentList)
-                            let fnNode = DeclFnStmt.FnDeclNode(identifier, returnType, fnParams, fnBody) 
+                            let fnNode = DeclFnStmt.FnDeclNode(identifier, returnType, fnParams, fnBody, (uint64 token_of_def.Line), (uint64 token_of_def.Pos)) 
 
                             let fnData = FnData(returnType, argumentList)
                             fnNode
