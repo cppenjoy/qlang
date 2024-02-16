@@ -4,78 +4,39 @@
 
 Supercompilation is an optimization technique that allows you to transform programs into more efficient versions of yourself. MetaLang is a toy language, study its source code if you want to understand how supercompilers work.
 
-## Compiler and Language Status
+## Branch info
+branch info - https://github.com/cppenjoy/qlang/blob/features/branch-info.md
 
-Color Table
-| Color | Means |
-|-|-|
-| 🟢 | It's already done |
-| 🟡 | Partially finished |
-| ⚪ | Planned, It is planned to start doing after the almost finished stage |
-| ⚫ | Not Ready, will be done in the future |
-| 🟠 | Thinking About It, Maybe it will, maybe not |
-| 🟣 | Refused, and will not even be considered |
+upcoming features - https://github.com/cppenjoy/qlang/tree/features/features
 
-Compiler Status
+code examples - https://github.com/cppenjoy/qlang/tree/features/examples
 
-| Stage | Status | Color Status
-|-|-|-|
-| CLI | Ready | 🟢 |
-| Lexer | Ready | 🟢 |
-| Parser | Partly | 🟡 |
-| Semantic Analyzer | Partly | 🟢 
-| Intermediate Representation | Planned | ⚪ |
-| Optimizations | Not Ready | ⚫ |
-| Supercompilation | Planned | ⚪ |
-| Linker | Not Ready | ⚫ |
-| CodeGen to x86 | Planned | ⚪ |
-| CodeGen to Wasm | Planned | ⚪ |
-| CodeGen to x86-x64 | Thinking About It | 🟠 |
-| CodeGen to ARM | Thinking About It | 🟠 |
-| Bootstrapping | Thinking About It | 🟠 |
+syntax - https://github.com/cppenjoy/qlang/tree/features/Syntax
 
-
-Language Status
-
-| Stage | Status | Color Status
-|-|-|-|
-| Grammar | Ready | 🟢 |
-| Type System Rules | Ready | 🟢 |
-| API For Code Analysis | Ready | 🟢 |
-| Documentation | Planned | ⚪ |
-| Playground site for MetaLang(Include Online Code Editor, Compilation, Decompilation)  |  Planned | ⚪ |
-| Standart Library (with IO Module for Linux and Windows) | Thinking About It | 🟠 |
-| OOP | Thinking About It | 🟠 |
-| Reflection | Thinking About It | 🟠 |
-| Extension for Vim and VS Code | Thinking About It | 🟠 |
-| Powerful IDE | Thinking About It | 🟠 |
-| Debugger | Denied | 🟣 |
-| Package Manager | Denied | 🟣 |
-| Change license from MIT to GNU GPL | Denied | 🟣 |
-
-If you want to contribute to the development of the project, then scroll below or open contributing.md
+sema - https://github.com/cppenjoy/qlang/tree/features/SemaRule
 
 ## Small code examples
 
 Here are some code examples on MetaLang that demonstrate its main features and syntax:
 
 ```fs
-// Declaring an alias for a type
-using args = array string
+#include "type.h"
 
 // Entry Point
-fn main(number argc, args argv) number
+fn main(int32 argc, string_t[] argv) int32
 {
-    for i of 0 to argc
+    for 1 to argc
     {
         if (argv[i] == "-h")
         {
             print "Help information: ...."
-            return 0
+            return -1
         }
 
         print "Undefined arg"
     }
+
+    return 0
 }
 
 ```
@@ -133,3 +94,53 @@ Using Visual Studio:
 - Open the `MetaLang.sln` file in Visual Studio.
 - Select `Release` as the configuration and `Any CPU` as the platform from the toolbar.
 - Build the solution by pressing `Ctrl+Shift+B` or selecting `Build -> Build Solution` from the menu.
+## Compiler and Language Status
+
+Color Table
+| Color | Means |
+|-|-|
+| 🟢 | It's already done |
+| 🟡 | Partially finished |
+| ⚪ | Planned, It is planned to start doing after the almost finished stage |
+| ⚫ | Not Ready, will be done in the future |
+| 🟠 | Thinking About It, Maybe it will, maybe not |
+| 🟣 | Refused, and will not even be considered |
+
+Compiler Status
+
+| Stage | Status | Color Status
+|-|-|-|
+| CLI | Ready | 🟢 |
+| Lexer | Ready | 🟢 |
+| Parser | Partly | 🟢 |
+| Semantic Analyzer | Partly | 🟡 
+| Intermediate Representation | Planned | ⚪ |
+| Optimizations | Not Ready | ⚫ |
+| Supercompilation | Planned | ⚪ |
+| Linker | Not Ready | ⚫ |
+| CodeGen to x86 | Planned | ⚪ |
+| CodeGen to Wasm | Planned | ⚪ |
+| CodeGen to x86-x64 | Thinking About It | 🟠 |
+| CodeGen to ARM | Thinking About It | 🟠 |
+| Bootstrapping | Thinking About It | 🟠 |
+
+
+Language Status
+
+| Stage | Status | Color Status
+|-|-|-|
+| Grammar | Ready | 🟢 |
+| Type System Rules | Ready | 🟢 |
+| API For Code Analysis | Ready | 🟢 |
+| Documentation | Planned | ⚪ |
+| Playground site for MetaLang(Include Online Code Editor, Compilation, Decompilation)  |  Planned | ⚪ |
+| Standart Library (with IO Module for Linux and Windows) | Thinking About It | 🟠 |
+| OOP | Thinking About It | 🟠 |
+| Reflection | Thinking About It | 🟠 |
+| Extension for Vim and VS Code | Thinking About It | 🟠 |
+| Powerful IDE | Thinking About It | 🟠 |
+| Debugger | Denied | 🟣 |
+| Package Manager | Denied | 🟣 |
+| Change license from MIT to GNU GPL | Denied | 🟣 |
+
+If you want to contribute to the development of the project, then scroll below or open contributing.md
