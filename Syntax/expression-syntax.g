@@ -10,7 +10,7 @@ expression ->
     | call-expression
 
 literal ->
-    | number
+    number
     | string    
     | boolean
 
@@ -27,19 +27,24 @@ if-expression ->
     match expression ':' expression
 
 binary-expression ->
-    number op expression
+    primary-expr op expression
+
+primary-expr ->
+    number 
+    | identifier
+    | cast-expression
 
 op ->
-    | '+'
+    '+'
     | '-'
     | '*'
     | '/'
 
 integer-suffix ->
-    | 'b' // int8
+    'b' // int8
     | 's' // int16
     | 'l' // int64
 
 identifier -> ([a-zA-Z][0..9]?)*
 number -> integer-suffix? [0..9]+ (. [0..9])?
-string -> '"' [any]* '"'
+string -> '"' [A-Z] '"'

@@ -174,6 +174,9 @@ module ParserDefinition =
                 | TokenType.Identifier ->                     
                     Primary.PrimaryIdentifier (Identifier.Identifier (primary.Lexeme, currentScope))
 
+                | TokenType.LPair ->   
+                    parsePrimaryCastExpression()
+
                 | _ -> 
                     throwError $"You cannot use NaN in binary expressions. Ref: {primary.Type.ToString()}" |> ignore
                     Primary.EmptyNode ()
@@ -243,6 +246,47 @@ module ParserDefinition =
                     throwError $"Unrecognized identifier. An identifier can only contain letters, _ and digit (after the letter)\n Note: This identifier caused was not recognized\n\t{primary.Line} | {lookback().Lexeme} {primary.Lexeme} <- this is a bad identifier" |> ignore
                     Identifier.Identifier("", "")
 
+            and parseCastExpression(): Expression =
+
+                report "parsing cast expression....."
+
+                let typeOf = parseType()
+
+                match next().Type with
+                | RPair ->
+
+                    let identifier = parseIdentifier()
+                    
+                    match next().Type with
+                    | Operator ->
+
+                        pos <- pos - 4
+                        parseBinaryExpression()
+
+                    | _ ->
+                        pos <- pos - 1
+                        Expression.CastExpression (CastExpression(typeOf, identifier))
+
+                | _ ->
+                    throwError "')' excepted" |> ignore
+                    Expression.EmptyNode (EmptyNode ())
+                
+            and parsePrimaryCastExpression(): Primary =
+
+                report "parsing primary cast expression....."
+
+                let typeOf = parseType()
+
+                match next().Type with
+                | RPair ->
+
+                    let identifier = parseIdentifier()
+                    Primary.Cast (CastExpression(typeOf, identifier))
+
+                | _ ->
+                    throwError "')' excepted" |> ignore
+                    Primary.EmptyNode ()
+
             and parseExpression(): Expression =
 
                 report "parsing expression....."
@@ -250,20 +294,13 @@ module ParserDefinition =
                 let primary: Token = next()
 
                 match primary.Type with
-
+            
                 | LPair -> 
 
-                    if isType(next())
-                    then
+                    if isType(next()) then
                         pos <- pos - 1
+                        parseCastExpression()
 
-                        let typeOf = parseType()
-
-                        next() |> ignore // Skip the ) symbol
-                        let identifier = parseIdentifier()
-
-                        Expression.CastExpression (CastExpression(typeOf, identifier))
-                    
                     else
                         let expression = parseExpression()
                         next() |> ignore
@@ -278,8 +315,21 @@ module ParserDefinition =
 
                         let parsingResult = List<Expression>()
 
-                        
+                        let rec parseParam() =
 
+                            match next().Type with
+                            | RPair -> ()
+                            | _ -> 
+                                parseExpression() |> parsingResult.Add
+
+                                match next().Type with
+                                | RPair -> ()
+                                | Comma -> parseParam()
+                                | _ -> 
+                                    throwError "Unknown symbol" |> ignore
+
+
+                        parseParam()
                         parsingResult
 
 

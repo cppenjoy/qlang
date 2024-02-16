@@ -94,7 +94,12 @@ module SemaDefinition =
             
             | Expression.CastExpression x ->
 
-                (this :> IVisitor).Visit x
+                match x with
+                | CastExpression.CastExpression (typeVariant, _) ->
+
+                    if not(typeVariant = excepted)
+                    then 
+                        this.throwError $"Type incompatibility. The {typeVariant.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t|   " token.Line token.Pos
 
             | Expression.Identifier x ->
             
@@ -154,6 +159,18 @@ module SemaDefinition =
                     | _ ->
                         ()
                 
+                | Primary.Cast x ->
+
+                    match x with
+                    | CastExpression.CastExpression (castTo, _) ->
+                        this.TypeCheckExpression(expr, castTo)
+
+                        if not(castTo = excepted)
+                        then 
+                            this.throwError $"Type incompatibility. The {castTo.ToString()} is incompatible with the type {excepted.ToString()}\n Note: link to the literal\n\t|   " token.Line token.Pos
+
+
+
                 | Primary.PrimaryIdentifier (identifier) ->
                     this.TypeCheckExpression(expr, this.ToTypeVariant(identifier))
 

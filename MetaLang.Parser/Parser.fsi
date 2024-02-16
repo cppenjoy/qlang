@@ -185,6 +185,7 @@ namespace MetaLang.Parser
         
         and Primary =
             | Primary of Literal
+            | Cast of CastExpression
             | PrimaryIdentifier of Identifier
             | EmptyNode of unit
         
